@@ -1,5 +1,5 @@
 import { EmbedBuilder } from "discord.js";
 
 export function messageEmbed(message: string) {
-  return message;
+  return [new EmbedBuilder().setDescription(`**${message}**`)];
 }

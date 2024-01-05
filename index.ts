@@ -19,14 +19,17 @@ const games = new Collection<
 >();
 
 client.on(Events.MessageCreate, (message) => {
-  if (message.content === "!start") {
+  const { content, channelId, channel, author } = message;
+
+  if (content === "!start") {
     const gameInfo = createGame();
-    games.set(message.channelId, gameInfo);
+    games.set(channelId, gameInfo);
 
     if (gameInfo) {
-      message.channel.send("Starting Game...");
+      channel.send("Starting Game...");
 
       let points = gameInfo.get("points") as Collection<string, number>;
+      let numberOfPlayersWithPoints = 0;
 
       let currentRound = 0;
       let rounds = 3;
@@ -36,27 +39,41 @@ client.on(Events.MessageCreate, (message) => {
 
         currentRound++;
 
-        const min = 100;
-        const max = 1000;
-
-        let numberToGuess = generateRandomNumberInARange(min, max);
-        console.log("Setting the number to guess: ", numberToGuess);
+        let min = 99;
+        let max = 999;
 
         let closestGuesser: null | string = null;
         let closestGuess = Number.MAX_SAFE_INTEGER;
         let minDifference = Number.MAX_SAFE_INTEGER;
 
-        const collector = message.channel.createMessageCollector({
+        let userLoot = numberOfPlayersWithPoints > 1 ? true : false;
+        const randomPlayer = points.randomKey();
+
+        if (userLoot && randomPlayer) {
+          max = Math.min(999, (points.get(randomPlayer) as number) * 0.5);
+        }
+
+        let numberToGuess = generateRandomNumberInARange(min, max);
+        console.log("Setting the number to guess: ", numberToGuess);
+
+        const collector = channel.createMessageCollector({
           filter: (msg) => !msg.author.bot && !isNaN(parseInt(msg.content)),
-          time: 20000,
+          time: 10000,
         });
 
-        message.channel.send(
-          `Attention treasure hunters! Guess the loot between ${min} - ${max}!`
-        );
+        if (games.get(channelId) === undefined) return;
+
+        if (!userLoot)
+          channel.send(
+            `### Attention treasure hunters! Guess the loot between ${min} - ${max}! 💰`
+          );
+        else
+          channel.send(
+            `### <@${randomPlayer}>'s dropped their coins! Let's steal it 🤑`
+          );
 
         collector.on("collect", (msg) => {
-          if (games.get(message.channelId) === undefined) {
+          if (games.get(channelId) === undefined) {
             collector.stop();
             return;
           }
@@ -75,7 +92,7 @@ client.on(Events.MessageCreate, (message) => {
         });
 
         collector.on("end", () => {
-          if (games.get(message.channelId) === undefined) return;
+          if (games.get(channelId) === undefined) return;
 
           if (closestGuesser !== null) {
             const playerPoints = points.get(closestGuesser);
@@ -87,9 +104,29 @@ client.on(Events.MessageCreate, (message) => {
               playerPoints ? playerPoints + newPoints : newPoints
             );
 
-            message.channel.send(
-              `<@${closestGuesser}> have pulled off a loot heist! Good Job!`
-            );
+            numberOfPlayersWithPoints++;
+
+            if (userLoot && randomPlayer && closestGuesser !== randomPlayer) {
+              points.set(
+                randomPlayer,
+                (points.get(randomPlayer) as number) - newPoints
+              );
+
+              channel.send(
+                `Oof, <@${randomPlayer}> lost their ${newPoints} coins 😔`
+              );
+            } else if (userLoot && closestGuesser === randomPlayer)
+              channel.send(
+                `Woah, <@${randomPlayer}> get their coins back! 😮 `
+              );
+            else if (userLoot)
+              channel.send(
+                `OMG, <@${closestGuess}> stole ${newPoints} coins! 😮 `
+              );
+            else
+              channel.send(
+                `### <@${closestGuesser}> have pulled off a loot heist! Good Job!`
+              );
           }
 
           if (currentRound < rounds) {
@@ -99,13 +136,13 @@ client.on(Events.MessageCreate, (message) => {
       };
 
       const endRound = async () => {
-        if (games.get(message.channelId) === undefined) return;
+        if (games.get(channelId) === undefined) return;
 
         const winner = getMaxPointsHolder(points);
         await wait(3);
 
-        message.channel.send(
-          `Game Over! <@${winner.userId}> wins with ${winner.points} coins! 🥳`
+        channel.send(
+          `### Game Over! <@${winner.userId}> wins with ${winner.points} coins! 🥳`
         );
       };
 
@@ -113,14 +150,11 @@ client.on(Events.MessageCreate, (message) => {
     }
   }
 
-  if (message.content === "!end") {
-    games.delete(message.channelId);
+  if (content === "!end") {
+    games.delete(channelId);
 
-    message.channel.send(
-      `Why would you do that? :face_holding_back_tears: Anyways, Game Over, thanks to $<@{
-        message.authr>.id
-      )} :unamused:`
-    );
+    channel.send(`### Why would you do that? 🥺`);
+    channel.send(`### Anyways, Game Over, thanks to <@${author.id}> 😒`);
   }
 });
 

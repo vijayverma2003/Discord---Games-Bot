@@ -1,6 +1,6 @@
-import Canvas from "@napi-rs/canvas";
-import { User } from "discord.js";
 import { request } from "undici";
+import { User } from "discord.js";
+import Canvas from "@napi-rs/canvas";
 
 export function wait(seconds: number) {
   return new Promise<void>((resolve) =>

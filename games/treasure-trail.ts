@@ -1,46 +1,36 @@
-import { AttachmentBuilder, Collection, Message, User } from "discord.js";
-import { Games } from "..";
-import { messageEmbed } from "../embeds/treasure-trail";
-import path from "path";
+import {
+  AttachmentBuilder,
+  Collection,
+  EmbedBuilder,
+  Message,
+  User,
+} from "discord.js";
 import {
   createCanvasImage,
   generateRandomNumberInARange,
   wait,
 } from "../utils/helper";
-
-export function createTreasureTrailGame() {
-  const gameInfo = new Collection<
-    string,
-    number | boolean | Collection<string, number>
-  >();
-
-  gameInfo.set("active", true);
-  gameInfo.set("points", new Collection<string, number>());
-
-  return gameInfo;
-}
-
-export function getMaxPointsHolder(points: Collection<string, number>) {
-  return points.reduce(
-    (max, points, userId) => (points > max.points ? { userId, points } : max),
-    { userId: "", points: -1 }
-  );
-}
+import { Games } from "..";
+import { messageEmbed } from "../embeds/treasure-trail";
+import path from "path";
 
 export default class TreasureTrail {
-  message: Message<boolean>;
-  games: Games;
-  gameInfo: Collection<string, number | boolean | Collection<string, number>>;
-  points: Collection<string, number>;
-  numberOfPlayersWithPoints: number;
-  currentRound: number;
-  rounds: number;
+  private currentRound: number;
+  private games: Games;
+  private message: Message<boolean>;
+  private numberOfPlayersWithPoints: number;
+  private points: Collection<string, number>;
+  private rounds: number;
+  private gameInfo: Collection<
+    string,
+    number | boolean | Collection<string, number>
+  >;
 
   constructor(message: Message<boolean>, games: Games) {
     this.message = message;
     this.games = games;
 
-    this.gameInfo = createTreasureTrailGame();
+    this.gameInfo = this.createTreasureTrailGame();
     this.games.set(message.channelId, this.gameInfo);
 
     this.points = this.gameInfo.get("points") as Collection<string, number>;
@@ -48,13 +38,32 @@ export default class TreasureTrail {
     this.currentRound = 0;
     this.rounds = 3;
 
-    this.message.channel.send({ embeds: messageEmbed("Starting Game...") });
+    this.message.channel.send({
+      embeds: messageEmbed("Starting Treasure Trail... "),
+    });
+  }
+
+  private getMaxPointsHolder(points: Collection<string, number>) {
+    return points.reduce(
+      (max, points, userId) => (points > max.points ? { userId, points } : max),
+      { userId: "", points: -1 }
+    );
+  }
+
+  private createTreasureTrailGame() {
+    const gameInfo = new Collection<
+      string,
+      number | boolean | Collection<string, number>
+    >();
+
+    gameInfo.set("active", true);
+    gameInfo.set("points", new Collection<string, number>());
+
+    return gameInfo;
   }
 
   async playRound() {
     console.log("Game Started");
-    await wait(7);
-
     this.currentRound++;
 
     let min = 99;
@@ -80,22 +89,34 @@ export default class TreasureTrail {
 
     const collector = this.message.channel.createMessageCollector({
       filter: (msg) => !msg.author.bot && !isNaN(parseInt(msg.content)),
-      time: 5000,
+      time: 30000,
     });
 
     if (this.games.get(this.message.channelId) === undefined) return;
 
     if (!userLoot)
       this.message.channel.send({
-        embeds: messageEmbed(
-          `Attention treasure hunters! Guess the loot between ${min} - ${max}! 💰`
-        ),
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(
+              "A mysterious treasure chest has appeared! <:treasure:1194161940650536981>"
+            )
+            .setDescription(
+              `Guess the closest number to coins to win that treasure :D`
+            ),
+        ],
       });
     else {
       this.message.channel.send({
-        embeds: messageEmbed(
-          `${randomPlayerUser} dropped their coins! Let's steal it 🤑`
-        ),
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(
+              `${randomPlayerUser} accidently dropped their coins! <:gold:1194161918940827659>`
+            )
+            .setDescription(
+              `Guess the closest number to coins to steal them coins!`
+            ),
+        ],
       });
     }
 
@@ -140,31 +161,55 @@ export default class TreasureTrail {
             randomPlayer as string,
             (this.points.get(randomPlayer as string) as number) - newPoints
           );
+
+          const message = await this.message.channel.send({
+            embeds: messageEmbed(
+              `${randomPlayerUser}, ${user} stole your coins coins! *(gossips...)* :joy:`
+            ),
+          });
+
+          await wait(2);
+
+          await message.edit({
+            embeds: messageEmbed(
+              `${randomPlayerUser}, ${user} stole your coins coins! 🫢`
+            ),
+          });
         }
 
-        this.message.channel.send({
+        await this.message.channel.send({
           embeds: messageEmbed(
-            `${user} successfully stole ${newPoints} coins! 🤑`
+            `Congratulations ${user}, you won ${newPoints} coins! 🤑`
           ),
         });
       }
+
+      await wait(10);
 
       if (this.currentRound < this.rounds) this.playRound();
       else this.endRound();
     });
   }
 
-  async endRound() {
+  private async endRound() {
     if (this.games.get(this.message.channelId) === undefined) return;
 
-    const winner = getMaxPointsHolder(this.points);
+    const winner = this.getMaxPointsHolder(this.points);
     await wait(5);
 
     const user = this.message.client.users.cache.get(winner.userId);
 
+    if (Math.random() > 0.8) {
+      this.message.channel.send({
+        embeds: messageEmbed(`Guys ${user} got a very good luck! :eyes:`),
+      });
+
+      await wait(4);
+    }
+
     const attachment = new AttachmentBuilder(
       await createCanvasImage(
-        path.join(__dirname, "../assets/winner.png"),
+        path.join(__dirname, "../../assets/winner.png"),
         user
       ),
       { name: "winner.webp" }
@@ -173,7 +218,7 @@ export default class TreasureTrail {
     this.message.channel.send({
       files: [attachment],
       embeds: messageEmbed(
-        `Game Over! ${user} won the game with ${winner.points} coins! 🥳`
+        `Congratulations ${user} for winning the game with ${winner.points} <:treasure1:1194161932362580150>`
       ),
     });
   }

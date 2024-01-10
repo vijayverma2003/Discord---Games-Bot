@@ -2,6 +2,7 @@ import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
 import { messageEmbed } from "./embeds/treasure-trail";
 import dotenv from "dotenv";
 import TreasureTrail from "./games/treasure-trail";
+import { wait } from "./utils/helper";
 
 dotenv.config();
 
@@ -25,7 +26,7 @@ client.on(Events.MessageCreate, async (message) => {
 
   if (content === "!start") {
     const game = new TreasureTrail(message, games);
-    console.log(game);
+    await wait(5);
     await game.playRound();
   }
 

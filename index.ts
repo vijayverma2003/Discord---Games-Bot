@@ -31,6 +31,13 @@ client.on(Events.MessageCreate, async (message) => {
   }
 
   if (content === "!end") {
+    if (!games.has(channelId)) {
+      message.channel.send({
+        embeds: messageEmbed(`The game has not been started yet 💀`),
+      });
+      return;
+    }
+
     games.delete(channelId);
 
     message.channel.send({

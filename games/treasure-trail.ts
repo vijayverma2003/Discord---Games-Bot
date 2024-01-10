@@ -18,7 +18,6 @@ export default class TreasureTrail {
   private currentRound: number;
   private games: Games;
   private message: Message<boolean>;
-  private numberOfPlayersWithPoints: number;
   private points: Collection<string, number>;
   private rounds: number;
   private gameInfo: Collection<
@@ -34,7 +33,6 @@ export default class TreasureTrail {
     this.games.set(message.channelId, this.gameInfo);
 
     this.points = this.gameInfo.get("points") as Collection<string, number>;
-    this.numberOfPlayersWithPoints = 0;
     this.currentRound = 0;
     this.rounds = 3;
 
@@ -73,15 +71,16 @@ export default class TreasureTrail {
     let closestGuess = Number.MAX_SAFE_INTEGER;
     let minDifference = Number.MAX_SAFE_INTEGER;
 
-    let userLoot =
-      this.numberOfPlayersWithPoints > 3 && Math.random() > 0.7 ? true : false;
+    console.log(this.points.size);
+    let userLoot = this.points.size > 0 && Math.random() > 0.7 ? true : false;
     const randomPlayer = this.points.randomKey();
-    let randomPlayerUser: User | null = null;
+    let randomPlayerUser: User | undefined = undefined;
 
     if (userLoot && randomPlayer) {
       max = Math.min(999, (this.points.get(randomPlayer) as number) * 0.5);
-      const user = this.message.client.users.cache.get(randomPlayer as string);
-      if (user) randomPlayerUser = user;
+      randomPlayerUser = this.message.client.users.cache.get(
+        randomPlayer as string
+      );
     }
 
     let numberToGuess = generateRandomNumberInARange(min, max);
@@ -89,7 +88,7 @@ export default class TreasureTrail {
 
     const collector = this.message.channel.createMessageCollector({
       filter: (msg) => !msg.author.bot && !isNaN(parseInt(msg.content)),
-      time: 30000,
+      time: 10000,
     });
 
     if (this.games.get(this.message.channelId) === undefined) return;
@@ -102,7 +101,7 @@ export default class TreasureTrail {
               "A mysterious treasure chest has appeared! <:treasure:1194161940650536981>"
             )
             .setDescription(
-              `Guess the closest number to coins to win that treasure :D`
+              `Guess the closest number to number of coins to win that treasure! (${min} - ${max})`
             ),
         ],
       });
@@ -111,7 +110,7 @@ export default class TreasureTrail {
         embeds: [
           new EmbedBuilder()
             .setTitle(
-              `${randomPlayerUser} accidently dropped their coins! <:gold:1194161918940827659>`
+              ` ${randomPlayerUser} accidently dropped their coins! <:gold:1194161918940827659>`
             )
             .setDescription(
               `Guess the closest number to coins to steal them coins!`
@@ -154,8 +153,6 @@ export default class TreasureTrail {
           playerPoints ? playerPoints + newPoints : newPoints
         );
 
-        this.numberOfPlayersWithPoints++;
-
         if (userLoot && closestGuesser !== randomPlayer) {
           this.points.set(
             randomPlayer as string,
@@ -184,7 +181,7 @@ export default class TreasureTrail {
         });
       }
 
-      await wait(10);
+      await wait(7);
 
       if (this.currentRound < this.rounds) this.playRound();
       else this.endRound();
@@ -195,7 +192,7 @@ export default class TreasureTrail {
     if (this.games.get(this.message.channelId) === undefined) return;
 
     const winner = this.getMaxPointsHolder(this.points);
-    await wait(5);
+    await wait(2);
 
     const user = this.message.client.users.cache.get(winner.userId);
 
@@ -204,7 +201,7 @@ export default class TreasureTrail {
         embeds: messageEmbed(`Guys ${user} got a very good luck! :eyes:`),
       });
 
-      await wait(4);
+      await wait(2);
     }
 
     const attachment = new AttachmentBuilder(
@@ -218,7 +215,7 @@ export default class TreasureTrail {
     this.message.channel.send({
       files: [attachment],
       embeds: messageEmbed(
-        `Congratulations ${user} for winning the game with ${winner.points} <:treasure1:1194161932362580150>`
+        `${user} won the game with ${winner.points} coins :tada:`
       ),
     });
   }

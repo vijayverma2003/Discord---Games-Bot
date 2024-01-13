@@ -20,19 +20,17 @@ export default class TreasureTrail {
   private message: Message<boolean>;
   private points: Collection<string, number>;
   private rounds: number;
-  private gameInfo: Collection<
-    string,
-    number | boolean | Collection<string, number>
-  >;
 
   constructor(message: Message<boolean>, games: Games) {
     this.message = message;
     this.games = games;
 
-    this.gameInfo = this.createTreasureTrailGame();
-    this.games.set(message.channelId, this.gameInfo);
+    const gameInfo = this.createGame();
+    const updatedGames = this.games.set(message.channelId, gameInfo);
 
-    this.points = this.gameInfo.get("points") as Collection<string, number>;
+    this.points = updatedGames
+      .get(this.message.channelId)
+      ?.get("points") as Collection<string, number>;
     this.currentRound = 0;
     this.rounds = 3;
 
@@ -48,19 +46,13 @@ export default class TreasureTrail {
     );
   }
 
-  private createTreasureTrailGame() {
-    const gameInfo = new Collection<
-      string,
-      number | boolean | Collection<string, number>
-    >();
-
-    gameInfo.set("active", true);
+  private createGame() {
+    const gameInfo = new Collection<string, Collection<string, number>>();
     gameInfo.set("points", new Collection<string, number>());
-
     return gameInfo;
   }
 
-  async playRound() {
+  async startRound() {
     console.log("Game Started");
     this.currentRound++;
 
@@ -181,10 +173,10 @@ export default class TreasureTrail {
         });
       }
 
-      await wait(7);
-
-      if (this.currentRound < this.rounds) this.playRound();
-      else this.endRound();
+      if (this.currentRound < this.rounds) {
+        await wait(7);
+        this.startRound();
+      } else this.endRound();
     });
   }
 
@@ -192,7 +184,6 @@ export default class TreasureTrail {
     if (this.games.get(this.message.channelId) === undefined) return;
 
     const winner = this.getMaxPointsHolder(this.points);
-    await wait(2);
 
     const user = this.message.client.users.cache.get(winner.userId);
 

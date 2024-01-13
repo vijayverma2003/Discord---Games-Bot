@@ -32,3 +32,18 @@ export async function createCanvasImage(link: string, user: User | undefined) {
 
   return canvas.encode("webp");
 }
+
+export function shuffle(array: any[]) {
+  const updatedArray = [...array];
+
+  for (let i = 0; i < updatedArray.length; i++) {
+    const index = Math.floor(Math.random() * updatedArray.length);
+
+    const temp = updatedArray[index];
+
+    updatedArray[index] = updatedArray[i];
+    updatedArray[i] = temp;
+  }
+
+  return updatedArray;
+}

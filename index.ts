@@ -3,6 +3,7 @@ import { messageEmbed } from "./embeds/treasure-trail";
 import dotenv from "dotenv";
 import TreasureTrail from "./games/treasure-trail";
 import { wait } from "./utils/helper";
+import GlassBridgeGame from "./games/glass-bridge";
 
 dotenv.config();
 
@@ -11,12 +12,13 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions,
   ],
 });
 
 export type Games = Collection<
   string,
-  Collection<string, number | boolean | Collection<string, number>>
+  Collection<string, number | boolean | Collection<string, number> | string[]>
 >;
 
 const games: Games = new Collection();
@@ -25,9 +27,13 @@ client.on(Events.MessageCreate, async (message) => {
   const { content, channelId, author } = message;
 
   if (content === "!start") {
-    const game = new TreasureTrail(message, games);
-    await wait(5);
-    await game.playRound();
+    // const game = new TreasureTrail(message, games);
+    // await wait(5);
+    // await game.startRound();
+
+    const game = new GlassBridgeGame(message, games);
+    await wait(2);
+    game.beginGame();
   }
 
   if (content === "!end") {

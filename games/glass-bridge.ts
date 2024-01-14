@@ -57,11 +57,24 @@ class GlassBridgeGame {
     );
   }
 
+  isActive() {
+    return this.games.get(this.message.channelId);
+  }
+
   async joinGame(
     i: ButtonInteraction<CacheType>,
     embed: EmbedBuilder,
     msg: Message<boolean>
   ) {
+    if (!this.isActive()) {
+      await i.reply({
+        content: "The game already ended :slight_smile:",
+        ephemeral: true,
+      });
+
+      return;
+    }
+
     if (this.gameStarted) {
       await i.reply({
         content: "The game has already started! :slight_smile:",
@@ -97,6 +110,13 @@ class GlassBridgeGame {
   }
 
   async startGame(i: ButtonInteraction<CacheType>) {
+    if (this.players.length < 2) {
+      i.reply({
+        content: "There should be at-least two players to start the game",
+        ephemeral: true,
+      });
+    }
+
     if (i.user.id !== this.message.author.id) return;
 
     await i.reply({
@@ -108,8 +128,7 @@ class GlassBridgeGame {
     this.players = shuffle(this.players);
 
     await wait(2);
-
-    this.playRound();
+    if (this.isActive()) this.playRound();
   }
 
   async beginGame() {
@@ -171,6 +190,8 @@ class GlassBridgeGame {
 
       let collectorActive = false;
 
+      if (!this.isActive()) return;
+
       const msg = await this.message.channel.send(
         `${user}, Choose a bridge to step on!`
       );
@@ -190,6 +211,8 @@ class GlassBridgeGame {
       collectorActive = true;
 
       collector.on("collect", async (reaction) => {
+        if (!this.isActive()) return;
+
         if (reaction.emoji.name === leftReactionEmoji && Math.random() > 0.5) {
           await this.message.channel.send(
             `Hold up! You survived the chaos. But don't get cozy, darkness thrives on winners`
@@ -210,6 +233,8 @@ class GlassBridgeGame {
       });
 
       collector.on("end", async () => {
+        if (!this.isActive()) return;
+
         if (!collectorActive) return;
 
         this.removePlayer(index, true);
@@ -227,10 +252,11 @@ class GlassBridgeGame {
   }
 
   async endRound() {
+    if (!this.isActive()) return;
+
     if (this.players.length < 1) {
       await this.message.channel.send(`The abyss claims it's silence...`);
     } else {
-      await this.message.channel.send(`Bravo, You conquered the Glass Bridge!`);
       await this.message.channel.send(
         `🏆🏆 <@${this.players[0]}> won the game! 🏆🏆`
       );

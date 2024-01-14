@@ -18,13 +18,17 @@ import { shuffle, wait } from "../utils/helper";
 class GlassBridgeGame {
   private players: string[];
   private gameStarted: boolean;
-  private roundTimeInSeconds: number;
 
-  constructor(private message: Message<boolean>, private games: Games) {
+  constructor(
+    private message: Message<boolean>,
+    private games: Games,
+    private duration?: number
+  ) {
     this.message = message;
     this.games = games;
     this.gameStarted = false;
-    this.roundTimeInSeconds = 10;
+
+    if (duration) this.duration = duration;
 
     const gameInfo = this.createGame();
     const updatedGames = this.games.set(this.message.channelId, gameInfo);
@@ -110,6 +114,11 @@ class GlassBridgeGame {
   }
 
   async startGame(i: ButtonInteraction<CacheType>) {
+    if (!i.deferred) {
+      console.error("Invalid or unknown interaction. Ignoring.");
+      return;
+    }
+
     if (this.players.length < 2) {
       i.reply({
         content: "There should be at-least two players to start the game",
@@ -135,7 +144,9 @@ class GlassBridgeGame {
     const embed = new EmbedBuilder()
       .setTitle("Glass Bridge")
       .setDescription(
-        `\n **How to Play?** \n \n- Click the Join button to join the game \n- Click the Start button to start the game \n- The bot will ask you to select a glass to step on \n- React with left or right arrow to step on \n- You have ${this.roundTimeInSeconds} seconds to step on any glass \n`
+        `\n **How to Play?** \n \n- Click the Join button to join the game \n- Click the Start button to start the game \n- The bot will ask you to select a glass to step on \n- React with left or right arrow to step on \n- You have ${
+          this.duration || 10
+        } seconds to step on any glass \n`
       )
       .setImage("https://i.imgur.com/KhcoRVa.png")
       .setFooter({
@@ -204,7 +215,7 @@ class GlassBridgeGame {
           reaction.emoji.name === rightReactionEmoji);
 
       const collector = msg.createReactionCollector({
-        time: this.roundTimeInSeconds * 1000,
+        time: (this.duration || 10) * 1000,
         filter: collectorFilter,
       });
 

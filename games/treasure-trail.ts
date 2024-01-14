@@ -19,9 +19,15 @@ export default class TreasureTrail {
   private games: Games;
   private message: Message<boolean>;
   private points: Collection<string, number>;
-  private rounds: number;
+  private rounds?: number;
+  private duration?: number;
 
-  constructor(message: Message<boolean>, games: Games) {
+  constructor(
+    message: Message<boolean>,
+    games: Games,
+    rounds?: number,
+    duration?: number
+  ) {
     this.message = message;
     this.games = games;
 
@@ -32,7 +38,9 @@ export default class TreasureTrail {
       .get(this.message.channelId)
       ?.get("points") as Collection<string, number>;
     this.currentRound = 0;
-    this.rounds = 3;
+
+    if (rounds) this.rounds = rounds;
+    if (duration) this.duration = duration;
 
     this.message.channel.send({
       embeds: messageEmbed("Starting Treasure Trail... "),
@@ -52,8 +60,7 @@ export default class TreasureTrail {
     return gameInfo;
   }
 
-  async startRound() {
-    console.log("Game Started");
+  async beginGame() {
     this.currentRound++;
 
     let min = 99;
@@ -63,7 +70,6 @@ export default class TreasureTrail {
     let closestGuess = Number.MAX_SAFE_INTEGER;
     let minDifference = Number.MAX_SAFE_INTEGER;
 
-    console.log(this.points.size);
     let userLoot = this.points.size > 0 && Math.random() > 0.7 ? true : false;
     const randomPlayer = this.points.randomKey();
     let randomPlayerUser: User | undefined = undefined;
@@ -76,11 +82,10 @@ export default class TreasureTrail {
     }
 
     let numberToGuess = generateRandomNumberInARange(min, max);
-    console.log("Setting the number to guess: ", numberToGuess);
 
     const collector = this.message.channel.createMessageCollector({
       filter: (msg) => !msg.author.bot && !isNaN(parseInt(msg.content)),
-      time: 10000,
+      time: this.duration ? this.duration * 1000 : 20000,
     });
 
     if (this.games.get(this.message.channelId) === undefined) return;
@@ -173,9 +178,9 @@ export default class TreasureTrail {
         });
       }
 
-      if (this.currentRound < this.rounds) {
+      if (this.currentRound < (this.rounds || 5)) {
         await wait(7);
-        this.startRound();
+        this.beginGame();
       } else this.endRound();
     });
   }
@@ -186,6 +191,12 @@ export default class TreasureTrail {
     const winner = this.getMaxPointsHolder(this.points);
 
     const user = this.message.client.users.cache.get(winner.userId);
+
+    if (!user) {
+      await this.message.channel.send({
+        embeds: messageEmbed(`No one won the game pfft!`),
+      });
+    }
 
     if (Math.random() > 0.8) {
       this.message.channel.send({

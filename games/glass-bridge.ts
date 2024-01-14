@@ -114,11 +114,6 @@ class GlassBridgeGame {
   }
 
   async startGame(i: ButtonInteraction<CacheType>) {
-    if (!i.deferred) {
-      console.error("Invalid or unknown interaction. Ignoring.");
-      return;
-    }
-
     if (this.players.length < 2) {
       i.reply({
         content: "There should be at-least two players to start the game",

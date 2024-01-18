@@ -70,6 +70,58 @@ class GlassBridgeGame {
     embed: EmbedBuilder,
     msg: Message<boolean>
   ) {
+    try {
+      if (!this.isActive()) {
+        await i.reply({
+          content: "The game already ended :slight_smile:",
+          ephemeral: true,
+        });
+
+        return;
+      }
+
+      if (this.gameStarted) {
+        await i.reply({
+          content: "The game has already started! :slight_smile:",
+          ephemeral: true,
+        });
+
+        return;
+      }
+
+      if (this.players.find((player) => player === i.user.id)) {
+        await i.reply({
+          content: "You have already joined the game!",
+          ephemeral: true,
+        });
+
+        return;
+      }
+
+      this.players.push(i.user.id);
+
+      embed.setFooter({
+        text: `${this.players.length} users joined the game`,
+      });
+
+      msg.edit({
+        embeds: [embed],
+      });
+
+      await i.reply({
+        content: `Hey ${i.user}, Welcome to the nightmare stroll – the Glass Bridge. Brace yourself for the unexpected :slight_smile:`,
+        ephemeral: true,
+      });
+    } catch (error: any) {
+      console.error("Join Game Error:", error.message);
+      await i.reply({
+        content: `An error occured while joining the game`,
+        ephemeral: true,
+      });
+    }
+  }
+
+  async startGame(i: ButtonInteraction<CacheType>) {
     if (!this.isActive()) {
       await i.reply({
         content: "The game already ended :slight_smile:",
@@ -79,46 +131,12 @@ class GlassBridgeGame {
       return;
     }
 
-    if (this.gameStarted) {
-      await i.reply({
-        content: "The game has already started! :slight_smile:",
-        ephemeral: true,
-      });
-
-      return;
-    }
-
-    if (this.players.find((player) => player === i.user.id)) {
-      await i.reply({
-        content: "You have already joined the game!",
-        ephemeral: true,
-      });
-
-      return;
-    }
-
-    this.players.push(i.user.id);
-
-    embed.setFooter({
-      text: `${this.players.length} users joined the game`,
-    });
-
-    msg.edit({
-      embeds: [embed],
-    });
-
-    await i.reply({
-      content: `Hey ${i.user}, Welcome to the nightmare stroll – the Glass Bridge. Brace yourself for the unexpected :slight_smile:`,
-      ephemeral: true,
-    });
-  }
-
-  async startGame(i: ButtonInteraction<CacheType>) {
     if (this.players.length < 2) {
       i.reply({
         content: "There should be at-least two players to start the game",
         ephemeral: true,
       });
+      return;
     }
 
     if (i.user.id !== this.message.author.id) return;
@@ -174,13 +192,13 @@ class GlassBridgeGame {
     this.players.splice(index, 1);
 
     if (timeOver) {
-      await this.message.channel.send(
+      this.message.channel.send(
         `Tick-tock, Time's cruel on the Glass Bridge. Hope you're ready for the free-fall finale`
       );
       return;
     }
 
-    await this.message.channel.send(
+    this.message.channel.send(
       `Oops <@${userID}>, your luck just hit rock bottom. Say hello to the abyss below 🪦`
     );
   }

@@ -29,26 +29,20 @@ const prefix = "v.";
 client.on(Events.MessageCreate, async (message) => {
   try {
     const { content, channelId, author } = message;
-
     if (!content.toLowerCase().startsWith(prefix) || message.author.bot) return;
-
     const args = content.slice(prefix.length).trim().split(/ +/);
     const command = args.shift();
     if (command === "help") {
       await message.channel.send({ embeds: [helpEmbed] });
       return;
     }
-
     const game = args.shift();
-
     const treasureTrailCommands = ["t", "tt", "treasure-trail"];
     const glassBridgeCommands = ["g", "gb", "glass-bridge"];
-
     if (command === "start") {
       if (game && treasureTrailCommands.includes(game)) {
         const numberOfRounds = parseInt(args.shift() || "");
         const duration = parseInt(args.shift() || "");
-
         const game = new TreasureTrail(
           message,
           games,
@@ -59,7 +53,6 @@ client.on(Events.MessageCreate, async (message) => {
         await game.beginGame();
       } else if (game && glassBridgeCommands.includes(game)) {
         const duration = parseInt(args.shift() || "");
-
         const game = new GlassBridgeGame(message, games, duration);
         await wait(2);
         game.beginGame();
@@ -75,9 +68,7 @@ client.on(Events.MessageCreate, async (message) => {
         });
         return;
       }
-
       games.delete(channelId);
-
       message.channel.send({
         embeds: messageEmbed(
           `Why would you do that? 🥺 Anyways, Game Over, thanks to ${author} 😒`
@@ -88,6 +79,7 @@ client.on(Events.MessageCreate, async (message) => {
     }
   } catch (error) {
     console.log(error);
+    await message.channel.send("An error occured while executing the command.");
     return;
   }
 });

@@ -8,7 +8,11 @@ import {
 import path from "path";
 import { Games } from "..";
 import { messageEmbed } from "../embeds/treasure-trail";
-import { createCanvasImage, generateRandomNumber, wait } from "../utils/helper";
+import {
+  createCanvasImage,
+  generateRandomNumber,
+  wait,
+} from "../services/helper";
 
 class TreasureTrail {
   private currentRound: number;

@@ -1,6 +1,6 @@
 import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
 import { messageEmbed } from "./embeds/treasure-trail";
-import { wait } from "./utils/helper";
+import { wait } from "./services/helper";
 import dotenv from "dotenv";
 import GlassBridgeGame from "./games/glass-bridge";
 import TreasureTrail from "./games/treasure-trail";

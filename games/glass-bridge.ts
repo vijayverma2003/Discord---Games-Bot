@@ -13,7 +13,7 @@ import {
   User,
 } from "discord.js";
 import { Games } from "..";
-import { shuffle, wait } from "../utils/helper";
+import { shuffle, wait } from "../services/helper";
 
 class GlassBridgeGame {
   private players: string[];

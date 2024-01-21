@@ -15,6 +15,7 @@ import {
 class TreasureTrail {
   private readonly duration?: number;
   private readonly numberOfRounds?: number;
+  private readonly roundTimeGap = 2;
   private currentRound: number;
   private message: Message<boolean>;
   private points: Collection<string, number> = new Collection();
@@ -36,7 +37,7 @@ class TreasureTrail {
       );
     else this.numberOfRounds = defaultNumberOfRounds;
 
-    const defaultDuration = 30;
+    const defaultDuration = 3;
     const minDuration = 20;
     const maxDuration = 90;
 
@@ -71,31 +72,20 @@ class TreasureTrail {
     );
   }
 
-  private userLoot() {
-    const userLootAvailability = this.points.size > 0 && Math.random() > 0.7;
-    const victimID = this.points.randomKey() as string;
-    const victimUser = this.message.client.users.cache.get(victimID);
-
-    return { userLootAvailability, victimID, victimUser };
-  }
-
   async startGame() {
-    let waitingTime = 10;
-    let timestamp = Math.floor(Date.now() / 1000) + waitingTime;
+    let timestamp = Math.floor(Date.now() / 1000) + this.roundTimeGap;
 
     await sendGameMessage(this.message, {
       embeds: [
-        new EmbedBuilder()
-          .setTitle("Get Ready")
-          .setDescription(
-            `Starting round ${this.currentRound + 1} of ${
-              this.numberOfRounds
-            } <t:${timestamp}:R>`
-          ),
+        new EmbedBuilder().setDescription(
+          `**Get Ready**\nStarting round ${this.currentRound + 1} of ${
+            this.numberOfRounds
+          } <t:${timestamp}:R>`
+        ),
       ],
     });
 
-    await wait(waitingTime);
+    await wait(this.roundTimeGap);
 
     this.currentRound++;
 
@@ -106,9 +96,16 @@ class TreasureTrail {
     let closestGuess = Number.MAX_SAFE_INTEGER;
     let minDifference = Number.MAX_SAFE_INTEGER;
 
-    const { userLootAvailability, victimID, victimUser } = this.userLoot();
+    const userLootAvailable = this.points.size > 0 && Math.random() > 0.1;
 
-    if (userLootAvailability && victimID)
+    const victimID = userLootAvailable
+      ? (this.points.randomKey() as string)
+      : undefined;
+    const victimUser = userLootAvailable
+      ? this.message.client.users.cache.get(victimID!)
+      : undefined;
+
+    if (userLootAvailable && victimID)
       max = Math.min(999, (this.points.get(victimID) as number) * 0.5);
 
     let numberToGuess = generateRandomNumber(min, max);
@@ -118,26 +115,20 @@ class TreasureTrail {
       time: this.duration ? this.duration * 1000 : 20000,
     });
 
-    if (!userLootAvailability)
+    if (!userLootAvailable)
       await sendGameMessage(this.message, {
         embeds: [
-          new EmbedBuilder()
-            .setTitle(`A mysterious treasure chest has appeared!`)
-            .setDescription(
-              `Guess the number of coins between ${min} and ${max} to get those coins <:treasure:1194161940650536981>`
-            ),
+          new EmbedBuilder().setDescription(
+            `**A mysterious treasure chest has appeared!**\nGuess the number of coins between ${min} and ${max} to get those coins <:treasure:1194161940650536981>`
+          ),
         ],
       });
     else {
       await sendGameMessage(this.message, {
         embeds: [
-          new EmbedBuilder()
-            .setTitle(
-              `${victimUser} accidently dropped their coins! <:gold:1194161918940827659>`
-            )
-            .setDescription(
-              `Guess the closest number to coins between ${min} and ${max} to steal them coins! `
-            ),
+          new EmbedBuilder().setDescription(
+            `**${victimUser} accidently dropped their coins! <:gold:1194161918940827659>** \nGuess the closest number to coins between ${min} and ${max} to steal them coins! `
+          ),
         ],
       });
     }
@@ -170,8 +161,8 @@ class TreasureTrail {
 
         this.giveCoins(closestGuesser, amount);
 
-        if (userLootAvailability && closestGuesser !== victimID) {
-          this.takeCoins(victimID, amount);
+        if (userLootAvailable && closestGuesser !== victimID) {
+          this.takeCoins(victimID!, amount);
 
           await sendGameMessage(this.message, {
             embeds: [
@@ -180,7 +171,7 @@ class TreasureTrail {
               ),
             ],
           });
-        } else if (userLootAvailability && closestGuesser === victimID)
+        } else if (userLootAvailable && closestGuesser === victimID)
           await sendGameMessage(this.message, {
             embeds: [
               new EmbedBuilder().setDescription(
@@ -199,9 +190,7 @@ class TreasureTrail {
       } else {
         await sendGameMessage(this.message, {
           embeds: [
-            new EmbedBuilder().setDescription(
-              `Why would you leave? Is that because I am a bot and I have no feelings? :sob: #JusticeForBots`
-            ),
+            new EmbedBuilder().setDescription(`No one collected any coins`),
           ],
         });
       }

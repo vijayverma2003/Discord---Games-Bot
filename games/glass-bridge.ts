@@ -223,12 +223,6 @@ class GlassBridgeGame {
       let collectorActive = true;
 
       collector.on("collect", async (reaction) => {
-        // Cases -
-        // 1. The number is greater than .5 and user selects the left emoji - Pass
-        // 2. The number is less than .5 and user selects the left emoji - Fail
-        // 3. The number is greater than .5 and user selects the right emoji - Fail
-        // 3. The number is less than .5 and user selects the right emoji - Pass
-
         const hardGlassBridge = Math.random() > 0.5 ? "LEFT" : "RIGHT";
 
         if (

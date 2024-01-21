@@ -4,6 +4,8 @@ import commands from "./text-commands";
 
 dotenv.config();
 
+const prefix = "v.";
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -12,8 +14,6 @@ const client = new Client({
     GatewayIntentBits.GuildMessageReactions,
   ],
 });
-
-const prefix = "v.";
 
 export const games: Collection<string, boolean> = new Collection();
 

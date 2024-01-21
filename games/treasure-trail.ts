@@ -13,12 +13,14 @@ import {
 } from "../utils/helper";
 
 class TreasureTrail {
-  private readonly duration?: number;
-  private readonly numberOfRounds?: number;
-  private readonly roundTimeGap = 2;
   private currentRound: number;
   private message: Message<boolean>;
   private points: Collection<string, number> = new Collection();
+  private readonly duration?: number;
+  private readonly numberOfRounds?: number;
+  private readonly roundTimeGap = 2;
+  private readonly beginningDelay: number = 10;
+  private readonly userLootRequiredFrequency: number = 3;
 
   constructor(message: Message<boolean>, rounds?: number, duration?: number) {
     this.message = message;
@@ -60,7 +62,7 @@ class TreasureTrail {
       ],
     });
 
-    await wait(0);
+    await wait(this.beginningDelay);
 
     this.startGame();
   }
@@ -96,7 +98,8 @@ class TreasureTrail {
     let closestGuess = Number.MAX_SAFE_INTEGER;
     let minDifference = Number.MAX_SAFE_INTEGER;
 
-    const userLootAvailable = this.points.size > 3 && Math.random() > 0.7;
+    const userLootAvailable =
+      this.points.size > this.userLootRequiredFrequency && Math.random() > 0.7;
 
     const victimID = userLootAvailable
       ? (this.points.randomKey() as string)
@@ -201,12 +204,12 @@ class TreasureTrail {
     });
   }
 
-  giveCoins(id: string, amount: number) {
+  giveCoins(id: string, amount: number): void {
     const balanceBefore = this.points.get(id) || 0;
     this.points.set(id, balanceBefore + amount);
   }
 
-  takeCoins(id: string, amount: number) {
+  takeCoins(id: string, amount: number): void {
     const balanceBefore = this.points.get(id) || 0;
     if (amount > balanceBefore) this.points.set(id, 0);
     else this.points.set(id, balanceBefore - amount);

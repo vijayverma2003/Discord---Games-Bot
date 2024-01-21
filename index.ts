@@ -25,11 +25,6 @@ client.on(Events.MessageCreate, async (message) => {
     const args = message.content.slice(prefix.length).trim().split(/ +/);
     const command = args.shift();
 
-    if (!command) {
-      await message.channel.send("Invalid Argument");
-      return;
-    }
-
     switch (command) {
       case "start":
         commands.start(message, args);
@@ -44,7 +39,9 @@ client.on(Events.MessageCreate, async (message) => {
         break;
 
       default:
-        await message.channel.send("Invalid Command");
+        await message.channel.send(
+          "Invalid Command. Use `v.help` for more information"
+        );
         return;
     }
   } catch (error) {

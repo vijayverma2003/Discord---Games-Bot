@@ -1,4 +1,5 @@
 import { Message } from "discord.js";
+import { games } from "..";
 import GlassBridgeGame from "../games/glass-bridge";
 import TreasureTrail from "../games/treasure-trail";
 
@@ -13,6 +14,14 @@ export default async function execute(
 ) {
   try {
     const game = args.shift();
+
+    if (games.get(message.channelId)) {
+      await message.channel.send(
+        "A game has been already started. Use `v.end` to end the ongoing game"
+      );
+
+      return;
+    }
 
     if (!game) {
       await message.channel.send(

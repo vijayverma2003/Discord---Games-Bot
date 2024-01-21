@@ -3,48 +3,65 @@ import {
   Collection,
   EmbedBuilder,
   Message,
-  User,
 } from "discord.js";
-import path from "path";
-import { Games } from "..";
-import { messageEmbed } from "../embeds/treasure-trail";
+import { games } from "..";
 import {
   createCanvasImage,
   generateRandomNumber,
+  sendGameMessage,
   wait,
-} from "../services/helper";
+} from "../utils/helper";
 
 class TreasureTrail {
+  private readonly duration?: number;
+  private readonly numberOfRounds?: number;
   private currentRound: number;
-  private duration?: number;
-  private games: Games;
   private message: Message<boolean>;
-  private points: Collection<string, number>;
-  private rounds?: number;
+  private points: Collection<string, number> = new Collection();
 
-  constructor(
-    message: Message<boolean>,
-    games: Games,
-    rounds?: number,
-    duration?: number
-  ) {
+  constructor(message: Message<boolean>, rounds?: number, duration?: number) {
     this.message = message;
-    this.games = games;
     this.currentRound = 0;
 
-    const gameInfo = this.createGame();
-    const updatedGames = this.games.set(message.channelId, gameInfo);
+    games.set(message.channelId, true);
 
-    this.points = updatedGames
-      .get(this.message.channelId)
-      ?.get("points") as Collection<string, number>;
+    const defaultNumberOfRounds = 3;
+    const minNumberOfRounds = 1;
+    const maxNumberOfRounds = 20;
 
-    if (rounds) this.rounds = rounds;
-    if (duration) this.duration = duration;
+    if (rounds)
+      this.numberOfRounds = Math.min(
+        Math.max(rounds, minNumberOfRounds),
+        maxNumberOfRounds
+      );
+    else this.numberOfRounds = defaultNumberOfRounds;
 
-    this.message.channel.send({
-      embeds: messageEmbed("Starting Treasure Trail... "),
+    const defaultDuration = 30;
+    const minDuration = 20;
+    const maxDuration = 90;
+
+    if (duration)
+      this.duration = Math.min(Math.max(duration, minDuration), maxDuration);
+    else this.duration = defaultDuration;
+  }
+
+  async beginGame() {
+    await sendGameMessage(this.message, {
+      embeds: [
+        new EmbedBuilder()
+          .setAuthor({
+            name: this.message.client.user.displayName,
+            iconURL: this.message.client.user.displayAvatarURL(),
+          })
+          .setDescription(
+            `** **\n**Welcome to Treasure Trail!**\n** **\n **How it works?**\n** **\n In every round the mysterious treasure will appear with random amount of coins. The person to guess the closest number to the amount of coins in treasure will win those coins. The person with most coins at the end will win the game\n ** ** \n**Number of rounds - ** ${this.numberOfRounds}\n** ** \n**Duration of each round - ** ${this.duration}\n** **\nGood luck guessing! :smiley:`
+          ),
+      ],
     });
+
+    await wait(0);
+
+    this.startGame();
   }
 
   private getMaxPointsHolder(points: Collection<string, number>) {
@@ -54,21 +71,32 @@ class TreasureTrail {
     );
   }
 
-  private createGame() {
-    const gameInfo = new Collection<string, Collection<string, number>>();
-    gameInfo.set("points", new Collection<string, number>());
-    return gameInfo;
-  }
-
   private userLoot() {
-    const userLootAvailability = this.points.size > 2 && Math.random() > 0.7;
+    const userLootAvailability = this.points.size > 0 && Math.random() > 0.7;
     const victimID = this.points.randomKey() as string;
     const victimUser = this.message.client.users.cache.get(victimID);
 
     return { userLootAvailability, victimID, victimUser };
   }
 
-  async beginGame() {
+  async startGame() {
+    let waitingTime = 10;
+    let timestamp = Math.floor(Date.now() / 1000) + waitingTime;
+
+    await sendGameMessage(this.message, {
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("Get Ready")
+          .setDescription(
+            `Starting round ${this.currentRound + 1} of ${
+              this.numberOfRounds
+            } <t:${timestamp}:R>`
+          ),
+      ],
+    });
+
+    await wait(waitingTime);
+
     this.currentRound++;
 
     let min = 99;
@@ -90,36 +118,32 @@ class TreasureTrail {
       time: this.duration ? this.duration * 1000 : 20000,
     });
 
-    if (this.games.get(this.message.channelId) === undefined) return;
-
     if (!userLootAvailability)
-      this.message.channel.send({
+      await sendGameMessage(this.message, {
         embeds: [
           new EmbedBuilder()
-            .setTitle(
-              "A mysterious treasure chest has appeared! <:treasure:1194161940650536981>"
-            )
+            .setTitle(`A mysterious treasure chest has appeared!`)
             .setDescription(
-              `Guess the closest number to number of coins to win that treasure! (${min} - ${max})`
+              `Guess the number of coins between ${min} and ${max} to get those coins <:treasure:1194161940650536981>`
             ),
         ],
       });
     else {
-      this.message.channel.send({
+      await sendGameMessage(this.message, {
         embeds: [
           new EmbedBuilder()
             .setTitle(
               `${victimUser} accidently dropped their coins! <:gold:1194161918940827659>`
             )
             .setDescription(
-              `Guess the closest number to coins to steal them coins!`
+              `Guess the closest number to coins between ${min} and ${max} to steal them coins! `
             ),
         ],
       });
     }
 
     collector.on("collect", (msg) => {
-      if (this.games.get(this.message.channelId) === undefined) {
+      if (!games.get(this.message.channelId)) {
         collector.stop();
         return;
       }
@@ -138,7 +162,7 @@ class TreasureTrail {
     });
 
     collector.on("end", async () => {
-      if (this.games.get(this.message.channelId) === undefined) return;
+      if (!games.get(this.message.channelId)) return;
 
       if (closestGuesser !== null) {
         const user = this.message.client.users.cache.get(closestGuesser);
@@ -149,36 +173,41 @@ class TreasureTrail {
         if (userLootAvailability && closestGuesser !== victimID) {
           this.takeCoins(victimID, amount);
 
-          const message = await this.message.channel.send({
-            embeds: messageEmbed(
-              `${victimUser}, ${user} stole your coins coins! *(gossips...)* :joy:`
-            ),
-          });
-
-          await wait(2);
-
-          await message.edit({
-            embeds: messageEmbed(
-              `${victimUser}, ${user} stole your coins coins! 🫢`
-            ),
+          await sendGameMessage(this.message, {
+            embeds: [
+              new EmbedBuilder().setDescription(
+                `Damn! ${user} stole ${victimUser}'s coins! 🫢`
+              ),
+            ],
           });
         } else if (userLootAvailability && closestGuesser === victimID)
-          await this.message.channel.send({
-            embeds: messageEmbed(
-              `Woah ${user} got their ${amount} coins back!`
-            ),
+          await sendGameMessage(this.message, {
+            embeds: [
+              new EmbedBuilder().setDescription(
+                `Woah ${user} got their ${amount} coins back!`
+              ),
+            ],
           });
         else
-          await this.message.channel.send({
-            embeds: messageEmbed(
-              `Congratulations ${user}, you won ${amount} coins! 🤑`
-            ),
+          await sendGameMessage(this.message, {
+            embeds: [
+              new EmbedBuilder().setDescription(
+                `Congratulations ${user}, you won ${amount} coins! 🤑`
+              ),
+            ],
           });
+      } else {
+        await sendGameMessage(this.message, {
+          embeds: [
+            new EmbedBuilder().setDescription(
+              `Why would you leave? Is that because I am a bot and I have no feelings? :sob: #JusticeForBots`
+            ),
+          ],
+        });
       }
 
-      if (this.currentRound < (this.rounds || 5)) {
-        await wait(7);
-        this.beginGame();
+      if (this.currentRound < this.numberOfRounds!) {
+        this.startGame();
       } else this.endRound();
     });
   }
@@ -195,36 +224,40 @@ class TreasureTrail {
   }
 
   private async endRound() {
-    if (!this.games.get(this.message.channelId)) return;
+    if (!games.get(this.message.channelId)) return;
 
     const winner = this.getMaxPointsHolder(this.points);
     this.announceWinner(winner.userId, winner.points);
-  }
-
-  private async createWinnerAttachment(user: User) {
-    return new AttachmentBuilder(
-      await createCanvasImage(
-        path.join(__dirname, "../../assets/winner.png"),
-        user
-      ),
-      { name: "winner.webp" }
-    );
   }
 
   private async announceWinner(id: string, points: number) {
     const user = this.message.client.users.cache.get(id);
 
     if (!user)
-      await this.message.channel.send({
-        embeds: messageEmbed(`No one won the game pfft!`),
+      await sendGameMessage(this.message, {
+        embeds: [
+          new EmbedBuilder().setDescription(`No one won the game pfft!`),
+        ],
       });
-    else
-      await this.message.channel.send({
-        files: [await this.createWinnerAttachment(user)],
-        embeds: messageEmbed(
-          `${user} won the game with ${points} coins :tada:`
-        ),
+    else {
+      const image = await createCanvasImage(user);
+
+      let attachment: AttachmentBuilder | null = null;
+
+      if (image)
+        attachment = new AttachmentBuilder(image, {
+          name: "winner.webp",
+        });
+
+      await sendGameMessage(this.message, {
+        files: attachment ? [attachment] : undefined,
+        embeds: [
+          new EmbedBuilder().setDescription(
+            `${user} won the game with ${points} coins :tada:`
+          ),
+        ],
       });
+    }
   }
 }
 

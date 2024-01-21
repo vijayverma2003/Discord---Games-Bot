@@ -1,4 +1,4 @@
-import { Client, Events, GatewayIntentBits } from "discord.js";
+import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
 import dotenv from "dotenv";
 import commands from "./text-commands";
 
@@ -14,6 +14,8 @@ const client = new Client({
 });
 
 const prefix = "v.";
+
+export const games: Collection<string, boolean> = new Collection();
 
 client.on(Events.MessageCreate, async (message) => {
   try {
@@ -47,9 +49,12 @@ client.on(Events.MessageCreate, async (message) => {
     }
   } catch (error) {
     console.log(error);
-    await message.channel.send("An error occured while executing the command.");
     return;
   }
+});
+
+client.on(Events.Error, (error) => {
+  console.log("Discord.js Error - ", error.message);
 });
 
 client.on(Events.ClientReady, (c) => {

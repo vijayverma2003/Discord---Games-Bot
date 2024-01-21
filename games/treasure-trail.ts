@@ -37,7 +37,7 @@ class TreasureTrail {
       );
     else this.numberOfRounds = defaultNumberOfRounds;
 
-    const defaultDuration = 3;
+    const defaultDuration = 30;
     const minDuration = 20;
     const maxDuration = 90;
 
@@ -96,7 +96,7 @@ class TreasureTrail {
     let closestGuess = Number.MAX_SAFE_INTEGER;
     let minDifference = Number.MAX_SAFE_INTEGER;
 
-    const userLootAvailable = this.points.size > 0 && Math.random() > 0.1;
+    const userLootAvailable = this.points.size > 3 && Math.random() > 0.7;
 
     const victimID = userLootAvailable
       ? (this.points.randomKey() as string)
@@ -112,7 +112,7 @@ class TreasureTrail {
 
     const collector = this.message.channel.createMessageCollector({
       filter: (msg) => !msg.author.bot && !isNaN(parseInt(msg.content)),
-      time: this.duration ? this.duration * 1000 : 20000,
+      time: this.duration! * 1000,
     });
 
     if (!userLootAvailable)

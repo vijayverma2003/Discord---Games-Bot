@@ -86,6 +86,8 @@ class GlassBridgeGame {
 
       this.players.push(i.user.id);
 
+      console.log(i.user.username);
+
       embed.setFooter({
         text: `${this.players.length} user${
           this.players.length > 1 ? "s" : ""
@@ -119,7 +121,7 @@ class GlassBridgeGame {
       return;
     }
 
-    if (this.players.length < 2) {
+    if (this.players.length < 1) {
       i.reply({
         content: "There should be at-least two players to start the game",
         ephemeral: true,
@@ -148,7 +150,7 @@ class GlassBridgeGame {
         iconURL: this.message.client.user.displayAvatarURL(),
       })
       .setDescription(
-        `** **\n**Welcome to Glass Bridge Game!**\n** **\n **How it works?**\n** **\nClick the **Join** button to join the game\n** **\nAfter the game starts, every user will be asked to choose either left or right bridge. If your guess is correct then you will move on to new step but if you did not then welcome to the abyss...\n** **\n**Duration for each player - ** ${this.duration}\n** **\nThe last person remaining will win the game 🙂\n** **\n`
+        `** **\n**Welcome to Glass Bridge Game!**\n** **\n **How it works?**\n** **\nClick the **Join** button to join the game\n** **\nAfter the game starts, every user will be asked to choose either left or right bridge. If your guess is correct then you will move on to new step but if you did not then welcome to the abyss...\n** **\n**Duration for each player - ** ${this.duration} seconds\n** **\nThe last person remaining will win the game 🙂\n** **\n`
       )
       .setFooter({ text: "No one has joined the game yet" });
 
@@ -168,7 +170,7 @@ class GlassBridgeGame {
   }
 
   getNextIndex(currentIndex: number) {
-    if (currentIndex === this.players.length - 1) return 0;
+    if (currentIndex >= this.players.length - 1) return 0;
     return currentIndex + 1;
   }
 
@@ -199,6 +201,9 @@ class GlassBridgeGame {
 
     const gameRound = async () => {
       const user = `<@${this.players[index]}>`;
+      console.log(this.players);
+      console.log("Index - ", index);
+      console.log("Size - ", this.players.length);
 
       const msg = await sendGameMessage(
         this.message,
@@ -223,7 +228,9 @@ class GlassBridgeGame {
       let collectorActive = true;
 
       collector.on("collect", async (reaction) => {
-        const hardGlassBridge = Math.random() > 0.5 ? "LEFT" : "RIGHT";
+        const randomNumber = Math.random();
+        const hardGlassBridge = randomNumber > 0.5 ? "LEFT" : "RIGHT";
+        console.log(randomNumber);
 
         if (
           (hardGlassBridge === "LEFT" &&
@@ -242,6 +249,9 @@ class GlassBridgeGame {
           collector.stop();
         } else {
           this.removePlayer(index);
+
+          index = this.getNextIndex(index);
+
           collectorActive = false;
           collector.stop();
         }
@@ -278,6 +288,8 @@ class GlassBridgeGame {
         this.message,
         `🏆🏆 <@${this.players[0]}> won the game! 🏆🏆`
       );
+
+    games.delete(this.message.channelId);
   }
 }
 

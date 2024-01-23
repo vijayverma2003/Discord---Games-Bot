@@ -57,7 +57,7 @@ class TreasureTrail {
             iconURL: this.message.client.user.displayAvatarURL(),
           })
           .setDescription(
-            `** **\n**Welcome to Treasure Trail!**\n** **\n **How it works?**\n** **\n In every round the mysterious treasure will appear with random amount of coins. The person to guess the closest number to the amount of coins in treasure will win those coins. The person with most coins at the end will win the game\n ** ** \n**Number of rounds - ** ${this.numberOfRounds}\n** ** \n**Duration of each round - ** ${this.duration}\n** **\nGood luck guessing! :smiley:`
+            `** **\n**Welcome to Treasure Trail!**\n** **\n **How it works?**\n** **\n In every round the mysterious treasure will appear with random amount of gems. The person to guess the closest number to the amount of gems in treasure will win those gems. The person with most gems at the end will win the game\n ** ** \n**Number of rounds - ** ${this.numberOfRounds}\n** ** \n**Duration of each round - ** ${this.duration}\n** **\nGood luck guessing! :smiley:`
           ),
       ],
     });
@@ -122,7 +122,7 @@ class TreasureTrail {
       await sendGameMessage(this.message, {
         embeds: [
           new EmbedBuilder().setDescription(
-            `**A mysterious treasure chest has appeared!**\nGuess the number of coins between ${min} and ${max} to get those coins <:treasure:1194161940650536981>`
+            `**A mysterious treasure chest has appeared!**\nGuess the number of gems between ${min} and ${max} to get those gems <:treasure:1194161940650536981>`
           ),
         ],
       });
@@ -130,7 +130,7 @@ class TreasureTrail {
       await sendGameMessage(this.message, {
         embeds: [
           new EmbedBuilder().setDescription(
-            `**${victimUser} accidently dropped their coins! <:gold:1194161918940827659>** \nGuess the closest number to coins between ${min} and ${max} to steal them coins! `
+            `**${victimUser} accidently dropped their gems! <:gold:1194161918940827659>** \nGuess the closest number to gems between ${min} and ${max} to steal them gems! `
           ),
         ],
       });
@@ -170,7 +170,7 @@ class TreasureTrail {
           await sendGameMessage(this.message, {
             embeds: [
               new EmbedBuilder().setDescription(
-                `Damn! ${user} stole ${victimUser}'s coins! 🫢`
+                `Damn! ${user} stole ${victimUser}'s gems! 🫢`
               ),
             ],
           });
@@ -178,7 +178,7 @@ class TreasureTrail {
           await sendGameMessage(this.message, {
             embeds: [
               new EmbedBuilder().setDescription(
-                `Woah ${user} got their ${amount} coins back!`
+                `Woah ${user} got their ${amount} gems back!`
               ),
             ],
           });
@@ -186,14 +186,14 @@ class TreasureTrail {
           await sendGameMessage(this.message, {
             embeds: [
               new EmbedBuilder().setDescription(
-                `Congratulations ${user}, you won ${amount} coins! 🤑`
+                `Congratulations ${user}, you won ${amount} gems! 🤑`
               ),
             ],
           });
       } else {
         await sendGameMessage(this.message, {
           embeds: [
-            new EmbedBuilder().setDescription(`No one collected any coins`),
+            new EmbedBuilder().setDescription(`No one collected any gems`),
           ],
         });
       }
@@ -245,11 +245,13 @@ class TreasureTrail {
         files: attachment ? [attachment] : undefined,
         embeds: [
           new EmbedBuilder().setDescription(
-            `${user} won the game with ${points} coins :tada:`
+            `${user} won the game with ${points} gems :tada:`
           ),
         ],
       });
     }
+
+    games.delete(this.message.channelId);
   }
 }
 

@@ -5,12 +5,7 @@ import {
   Message,
 } from "discord.js";
 import { games } from "..";
-import {
-  createCanvasImage,
-  generateRandomNumber,
-  sendGameMessage,
-  wait,
-} from "../utils/helper";
+import { createCanvasImage, generateRandomNumber, wait } from "../utils/helper";
 
 class TreasureTrail {
   private currentRound: number;
@@ -18,9 +13,15 @@ class TreasureTrail {
   private points: Collection<string, number> = new Collection();
   private readonly duration?: number;
   private readonly numberOfRounds?: number;
-  private readonly roundTimeGap = 2;
+  private readonly roundTimeGap = 10;
   private readonly beginningDelay: number = 10;
   private readonly userLootRequiredFrequency: number = 3;
+  private readonly defaultNumberOfRounds = 5;
+  private readonly minNumberOfRounds = 1;
+  private readonly maxNumberOfRounds = 30;
+  private readonly defaultDuration = 20;
+  private readonly minDuration = 20;
+  private readonly maxDuration = 90;
 
   constructor(message: Message<boolean>, rounds?: number, duration?: number) {
     this.message = message;
@@ -28,39 +29,51 @@ class TreasureTrail {
 
     games.set(message.channelId, true);
 
-    const defaultNumberOfRounds = 3;
-    const minNumberOfRounds = 1;
-    const maxNumberOfRounds = 20;
-
     if (rounds)
       this.numberOfRounds = Math.min(
-        Math.max(rounds, minNumberOfRounds),
-        maxNumberOfRounds
+        Math.max(rounds, this.minNumberOfRounds),
+        this.maxNumberOfRounds
       );
-    else this.numberOfRounds = defaultNumberOfRounds;
-
-    const defaultDuration = 30;
-    const minDuration = 20;
-    const maxDuration = 90;
+    else this.numberOfRounds = this.defaultNumberOfRounds;
 
     if (duration)
-      this.duration = Math.min(Math.max(duration, minDuration), maxDuration);
-    else this.duration = defaultDuration;
+      this.duration = Math.min(
+        Math.max(duration, this.minDuration),
+        this.maxDuration
+      );
+    else this.duration = this.defaultDuration;
+  }
+
+  getWelcomeMessage(): string {
+    return `\n\n**Welcome to Treasure Trail!**\n\n**How it works?**\n\nIn every round the mysterious treasure will appear with random amount of gems. The person to guess the closest number to the amount of gems in treasure will win those gems. The person with most gems at the end will win the game\n\n**Number of rounds -** ${this.numberOfRounds}\n\n**Duration of each round** - ${this.duration}s\n\n**Starting soon, Good luck guessing! :slight_smile:**`;
+  }
+
+  handleException(error: any) {
+    console.log("An unexpected error occured while sending a message", error);
+    this.message.client.users.cache
+      .get("874540112371908628")
+      ?.send(
+        `An unexpected error occured while sending a message in treasure trail! \n \`\`\`${error}\`\`\``
+      );
   }
 
   async beginGame() {
-    await sendGameMessage(this.message, {
-      embeds: [
-        new EmbedBuilder()
-          .setAuthor({
-            name: this.message.client.user.displayName,
-            iconURL: this.message.client.user.displayAvatarURL(),
-          })
-          .setDescription(
-            `** **\n**Welcome to Treasure Trail!**\n** **\n **How it works?**\n** **\n In every round the mysterious treasure will appear with random amount of gems. The person to guess the closest number to the amount of gems in treasure will win those gems. The person with most gems at the end will win the game\n ** ** \n**Number of rounds - ** ${this.numberOfRounds}\n** ** \n**Duration of each round - ** ${this.duration}\n** **\nGood luck guessing! :smiley:`
-          ),
-      ],
-    });
+    try {
+      if (!games.get(this.message.channelId)) return;
+
+      await this.message.channel.send({
+        embeds: [
+          new EmbedBuilder()
+            .setAuthor({
+              name: this.message.client.user.displayName,
+              iconURL: this.message.client.user.displayAvatarURL(),
+            })
+            .setDescription(this.getWelcomeMessage()),
+        ],
+      });
+    } catch (error) {
+      this.handleException(error);
+    }
 
     await wait(this.beginningDelay);
 
@@ -77,17 +90,23 @@ class TreasureTrail {
   async startGame() {
     let timestamp = Math.floor(Date.now() / 1000) + this.roundTimeGap;
 
-    await sendGameMessage(this.message, {
-      embeds: [
-        new EmbedBuilder().setDescription(
-          `**Get Ready**\nStarting round ${this.currentRound + 1} of ${
-            this.numberOfRounds
-          } <t:${timestamp}:R>`
-        ),
-      ],
-    });
+    try {
+      if (!games.get(this.message.channelId)) return;
 
-    await wait(this.roundTimeGap);
+      await this.message.channel.send({
+        embeds: [
+          new EmbedBuilder().setDescription(
+            `**Get Ready**\nStarting round ${this.currentRound + 1} of ${
+              this.numberOfRounds
+            } <t:${timestamp}:R>`
+          ),
+        ],
+      });
+
+      await wait(this.roundTimeGap);
+    } catch (error) {
+      this.handleException(error);
+    }
 
     this.currentRound++;
 
@@ -119,21 +138,33 @@ class TreasureTrail {
     });
 
     if (!userLootAvailable)
-      await sendGameMessage(this.message, {
-        embeds: [
-          new EmbedBuilder().setDescription(
-            `**A mysterious treasure chest has appeared!**\nGuess the number of gems between ${min} and ${max} to get those gems <:treasure:1194161940650536981>`
-          ),
-        ],
-      });
+      try {
+        if (!games.get(this.message.channelId)) return;
+
+        await this.message.channel.send({
+          embeds: [
+            new EmbedBuilder().setDescription(
+              `**A mysterious treasure chest has appeared!**\nGuess the number of gems between ${min} and ${max} to get those gems <:treasure:1194161940650536981>`
+            ),
+          ],
+        });
+      } catch (error) {
+        this.handleException(error);
+      }
     else {
-      await sendGameMessage(this.message, {
-        embeds: [
-          new EmbedBuilder().setDescription(
-            `**${victimUser} accidently dropped their gems! <:gold:1194161918940827659>** \nGuess the closest number to gems between ${min} and ${max} to steal them gems! `
-          ),
-        ],
-      });
+      try {
+        if (!games.get(this.message.channelId)) return;
+
+        await this.message.channel.send({
+          embeds: [
+            new EmbedBuilder().setDescription(
+              `**${victimUser} accidently dropped their gems! <:gold:1194161918940827659>** \nGuess the closest number to gems between ${min} and ${max} to steal them gems! `
+            ),
+          ],
+        });
+      } catch (error) {
+        this.handleException(error);
+      }
     }
 
     collector.on("collect", (msg) => {
@@ -167,35 +198,59 @@ class TreasureTrail {
         if (userLootAvailable && closestGuesser !== victimID) {
           this.takeCoins(victimID!, amount);
 
-          await sendGameMessage(this.message, {
-            embeds: [
-              new EmbedBuilder().setDescription(
-                `Damn! ${user} stole ${victimUser}'s gems! 🫢`
-              ),
-            ],
-          });
+          try {
+            if (!games.get(this.message.channelId)) return;
+
+            await this.message.channel.send({
+              embeds: [
+                new EmbedBuilder().setDescription(
+                  `Damn! ${user} stole ${victimUser}'s gems! 🫢`
+                ),
+              ],
+            });
+          } catch (error) {
+            this.handleException(error);
+          }
         } else if (userLootAvailable && closestGuesser === victimID)
-          await sendGameMessage(this.message, {
-            embeds: [
-              new EmbedBuilder().setDescription(
-                `Woah ${user} got their ${amount} gems back!`
-              ),
-            ],
-          });
+          try {
+            if (!games.get(this.message.channelId)) return;
+
+            await this.message.channel.send({
+              embeds: [
+                new EmbedBuilder().setDescription(
+                  `Woah ${user} got their ${amount} gems back!`
+                ),
+              ],
+            });
+          } catch (error) {
+            this.handleException(error);
+          }
         else
-          await sendGameMessage(this.message, {
+          try {
+            if (!games.get(this.message.channelId)) return;
+
+            await this.message.channel.send({
+              embeds: [
+                new EmbedBuilder().setDescription(
+                  `Congratulations ${user}, you won ${amount} gems! 🤑`
+                ),
+              ],
+            });
+          } catch (error) {
+            this.handleException(error);
+          }
+      } else {
+        try {
+          if (!games.get(this.message.channelId)) return;
+
+          await this.message.channel.send({
             embeds: [
-              new EmbedBuilder().setDescription(
-                `Congratulations ${user}, you won ${amount} gems! 🤑`
-              ),
+              new EmbedBuilder().setDescription(`No one collected any gems`),
             ],
           });
-      } else {
-        await sendGameMessage(this.message, {
-          embeds: [
-            new EmbedBuilder().setDescription(`No one collected any gems`),
-          ],
-        });
+        } catch (error) {
+          this.handleException(error);
+        }
       }
 
       if (this.currentRound < this.numberOfRounds!) {
@@ -226,11 +281,17 @@ class TreasureTrail {
     const user = this.message.client.users.cache.get(id);
 
     if (!user)
-      await sendGameMessage(this.message, {
-        embeds: [
-          new EmbedBuilder().setDescription(`No one won the game pfft!`),
-        ],
-      });
+      try {
+        if (!games.get(this.message.channelId)) return;
+
+        await this.message.channel.send({
+          embeds: [
+            new EmbedBuilder().setDescription(`No one won the game pfft!`),
+          ],
+        });
+      } catch (error) {
+        this.handleException(error);
+      }
     else {
       const image = await createCanvasImage(user);
 
@@ -240,15 +301,20 @@ class TreasureTrail {
         attachment = new AttachmentBuilder(image, {
           name: "winner.webp",
         });
+      try {
+        if (!games.get(this.message.channelId)) return;
 
-      await sendGameMessage(this.message, {
-        files: attachment ? [attachment] : undefined,
-        embeds: [
-          new EmbedBuilder().setDescription(
-            `${user} won the game with ${points} gems :tada:`
-          ),
-        ],
-      });
+        await this.message.channel.send({
+          files: attachment ? [attachment] : undefined,
+          embeds: [
+            new EmbedBuilder().setDescription(
+              `${user} won the game with ${points} gems :tada:`
+            ),
+          ],
+        });
+      } catch (error) {
+        this.handleException(error);
+      }
     }
 
     games.delete(this.message.channelId);

@@ -1,26 +1,6 @@
 import Canvas from "@napi-rs/canvas";
-import {
-  Message,
-  MessageCreateOptions,
-  MessagePayload,
-  User,
-} from "discord.js";
+import { User } from "discord.js";
 import { request } from "undici";
-import { games } from "..";
-
-export async function sendGameMessage(
-  message: Message<boolean>,
-  options: string | MessagePayload | MessageCreateOptions
-) {
-  try {
-    if (!games.get(message.channelId)) return;
-
-    const msg = await message.channel.send(options);
-    return msg;
-  } catch (error) {
-    console.log("An error occured while sending the message.");
-  }
-}
 
 export function wait(seconds: number) {
   return new Promise<void>((resolve) =>

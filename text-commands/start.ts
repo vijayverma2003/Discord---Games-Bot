@@ -8,6 +8,8 @@ const gameCommands = {
   glassBridge: ["g", "gb", "glass-bridge"],
 };
 
+const { treasureTrail, glassBridge } = gameCommands;
+
 export default async function execute(
   message: Message<boolean>,
   args: string[]
@@ -30,15 +32,13 @@ export default async function execute(
       return;
     }
 
-    const { treasureTrail, glassBridge } = gameCommands;
-
-    if (treasureTrail.includes(game)) {
+    if (treasureTrail.includes(game.toLowerCase())) {
       const numberOfRounds = parseInt(args.shift() || "");
       const duration = parseInt(args.shift() || "");
 
       const game = new TreasureTrail(message, numberOfRounds, duration);
       await game.beginGame();
-    } else if (glassBridge.includes(game)) {
+    } else if (glassBridge.includes(game.toLowerCase())) {
       const duration = parseInt(args.shift() || "");
       const game = new GlassBridgeGame(message, duration);
       game.beginGame();

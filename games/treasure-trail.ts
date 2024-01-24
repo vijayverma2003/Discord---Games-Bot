@@ -6,11 +6,10 @@ import {
 } from "discord.js";
 import { games } from "..";
 import { createCanvasImage, generateRandomNumber, wait } from "../utils/helper";
+import Game from "./game";
 
-class TreasureTrail {
-  private currentRound: number;
-  private message: Message<boolean>;
-  private points: Collection<string, number> = new Collection();
+class TreasureTrail extends Game {
+  protected readonly name = "TREASURE_TRAIL";
   private readonly duration?: number;
   private readonly numberOfRounds?: number;
   private readonly roundTimeGap = 10;
@@ -22,12 +21,17 @@ class TreasureTrail {
   private readonly defaultDuration = 20;
   private readonly minDuration = 20;
   private readonly maxDuration = 90;
+  private currentRound: number;
+  private message: Message<boolean>;
+  private points: Collection<string, number> = new Collection();
 
   constructor(message: Message<boolean>, rounds?: number, duration?: number) {
+    super();
+
     this.message = message;
     this.currentRound = 0;
 
-    games.set(message.channelId, true);
+    games.set(message.channelId, this.name);
 
     if (rounds)
       this.numberOfRounds = Math.min(
@@ -57,9 +61,13 @@ class TreasureTrail {
       );
   }
 
+  isActive() {
+    return games.get(this.message.channelId) === this.name;
+  }
+
   async beginGame() {
     try {
-      if (!games.get(this.message.channelId)) return;
+      if (!this.isActive()) return;
 
       await this.message.channel.send({
         embeds: [
@@ -91,7 +99,7 @@ class TreasureTrail {
     let timestamp = Math.floor(Date.now() / 1000) + this.roundTimeGap;
 
     try {
-      if (!games.get(this.message.channelId)) return;
+      if (!this.isActive()) return;
 
       await this.message.channel.send({
         embeds: [
@@ -139,7 +147,7 @@ class TreasureTrail {
 
     if (!userLootAvailable)
       try {
-        if (!games.get(this.message.channelId)) return;
+        if (!this.isActive()) return;
 
         await this.message.channel.send({
           embeds: [
@@ -153,7 +161,7 @@ class TreasureTrail {
       }
     else {
       try {
-        if (!games.get(this.message.channelId)) return;
+        if (!this.isActive()) return;
 
         await this.message.channel.send({
           embeds: [
@@ -168,7 +176,7 @@ class TreasureTrail {
     }
 
     collector.on("collect", (msg) => {
-      if (!games.get(this.message.channelId)) {
+      if (!this.isActive()) {
         collector.stop();
         return;
       }
@@ -187,7 +195,7 @@ class TreasureTrail {
     });
 
     collector.on("end", async () => {
-      if (!games.get(this.message.channelId)) return;
+      if (!this.isActive()) return;
 
       if (closestGuesser !== null) {
         const user = this.message.client.users.cache.get(closestGuesser);
@@ -199,7 +207,7 @@ class TreasureTrail {
           this.takeCoins(victimID!, amount);
 
           try {
-            if (!games.get(this.message.channelId)) return;
+            if (!this.isActive()) return;
 
             await this.message.channel.send({
               embeds: [
@@ -213,7 +221,7 @@ class TreasureTrail {
           }
         } else if (userLootAvailable && closestGuesser === victimID)
           try {
-            if (!games.get(this.message.channelId)) return;
+            if (!this.isActive()) return;
 
             await this.message.channel.send({
               embeds: [
@@ -227,7 +235,7 @@ class TreasureTrail {
           }
         else
           try {
-            if (!games.get(this.message.channelId)) return;
+            if (!this.isActive()) return;
 
             await this.message.channel.send({
               embeds: [
@@ -241,7 +249,7 @@ class TreasureTrail {
           }
       } else {
         try {
-          if (!games.get(this.message.channelId)) return;
+          if (!this.isActive()) return;
 
           await this.message.channel.send({
             embeds: [
@@ -271,7 +279,7 @@ class TreasureTrail {
   }
 
   private async endRound() {
-    if (!games.get(this.message.channelId)) return;
+    if (!this.isActive()) return;
 
     const winner = this.getMaxPointsHolder(this.points);
     this.announceWinner(winner.userId, winner.points);
@@ -282,7 +290,7 @@ class TreasureTrail {
 
     if (!user)
       try {
-        if (!games.get(this.message.channelId)) return;
+        if (!this.isActive()) return;
 
         await this.message.channel.send({
           embeds: [
@@ -302,7 +310,7 @@ class TreasureTrail {
           name: "winner.webp",
         });
       try {
-        if (!games.get(this.message.channelId)) return;
+        if (!this.isActive()) return;
 
         await this.message.channel.send({
           files: attachment ? [attachment] : undefined,

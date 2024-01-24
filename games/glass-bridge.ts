@@ -13,14 +13,19 @@ import {
 } from "discord.js";
 import { games } from "..";
 import { shuffle, wait } from "../utils/helper";
+import Game from "./game";
+import permissions from "../data/permissions.json";
 
-class GlassBridgeGame {
+class GlassBridgeGame extends Game {
+  private readonly minNumberOfPlayers = 3;
+  protected readonly name = "GLASS_BRIDGE";
   private players: string[] = [];
   private gameStarted: boolean = false;
   private loopEnd = false;
-  private readonly minNumberOfPlayers = 3;
 
   constructor(private message: Message<boolean>, private duration?: number) {
+    super();
+
     const defaultDuration = 10;
     const minDuration = 5;
     const maxDuration = 30;
@@ -29,7 +34,7 @@ class GlassBridgeGame {
       this.duration = Math.min(Math.max(duration, minDuration), maxDuration);
     else this.duration = defaultDuration;
 
-    games.set(this.message.channelId, true);
+    games.set(this.message.channelId, this.name);
   }
 
   handleException(error: any) {
@@ -59,7 +64,7 @@ class GlassBridgeGame {
   }
 
   isActive() {
-    return games.get(this.message.channelId);
+    return games.get(this.message.channelId) === this.name;
   }
 
   async joinGame(
@@ -140,7 +145,16 @@ class GlassBridgeGame {
       return;
     }
 
-    if (i.user.id !== this.message.author.id) return;
+    const member = this.message.guild?.members.cache.get(i.user.id);
+
+    const validUser =
+      i.user.id === this.message.author.id ||
+      permissions.users.includes(i.user.id) ||
+      member?.roles.cache.has(permissions.roles.admin) ||
+      member?.roles.cache.has(permissions.roles.eventStaff) ||
+      member?.roles.cache.has(permissions.roles.moderator);
+
+    if (!validUser) return;
 
     await i.reply({
       content: `Starting game...`,
@@ -335,8 +349,6 @@ class GlassBridgeGame {
     else
       try {
         if (!this.isActive()) return;
-
-        if (!games.get(this.message.channelId)) return;
 
         await this.message.channel.send(
           `🏆🏆 <@${this.players[0]}> won the game! 🏆🏆`

@@ -5,7 +5,7 @@ import {
   GatewayIntentBits,
   Message,
 } from "discord.js";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
 import commands from "./text-commands";
 
 dotenv.config();

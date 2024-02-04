@@ -1,4 +1,4 @@
-import Canvas from "@napi-rs/canvas";
+import * as Canvas from "@napi-rs/canvas";
 import { User } from "discord.js";
 import { request } from "undici";
 

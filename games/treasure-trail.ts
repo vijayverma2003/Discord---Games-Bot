@@ -152,7 +152,7 @@ class TreasureTrail extends Game {
         await this.message.channel.send({
           embeds: [
             new EmbedBuilder().setDescription(
-              `**A mysterious treasure chest has appeared!**\nGuess the number of gems between ${min} and ${max} to get those gems <:treasure:1194161940650536981>`
+              `<:treasure:1194161940650536981> **A mysterious treasure chest has appeared!**\n\n<:gem:1201740854285582336> Number of Gems: ${min} - ${max}\n\n<:rolemodel:1182650754897547335> Closest guess wins!`
             ),
           ],
         });
@@ -166,7 +166,7 @@ class TreasureTrail extends Game {
         await this.message.channel.send({
           embeds: [
             new EmbedBuilder().setDescription(
-              `**${victimUser} accidently dropped their gems! <:gold:1194161918940827659>** \nGuess the closest number to gems between ${min} and ${max} to steal them gems! `
+              `**${victimUser} accidently dropped their gems! <:gem:1201740854285582336>** \n\n<:gem:1201740854285582336> **Gems Count: ${min} - ${max}**\n\nClosest guess wins!`
             ),
           ],
         });
@@ -240,7 +240,7 @@ class TreasureTrail extends Game {
             await this.message.channel.send({
               embeds: [
                 new EmbedBuilder().setDescription(
-                  `Congratulations ${user}, you won ${amount} gems! 🤑`
+                  `Congratulations ${user}, you won ${amount} gems! <:gem:1201740854285582336>🤑`
                 ),
               ],
             });
@@ -316,7 +316,7 @@ class TreasureTrail extends Game {
           files: attachment ? [attachment] : undefined,
           embeds: [
             new EmbedBuilder().setDescription(
-              `${user} won the game with ${points} gems :tada:`
+              `${user} won the game with ${points} gems <:gem:1201740854285582336>`
             ),
           ],
         });

@@ -17,7 +17,7 @@ import Game from "./game";
 import permissions from "../data/permissions.json";
 
 class GlassBridgeGame extends Game {
-  private readonly minNumberOfPlayers = 3;
+  private readonly minNumberOfPlayers = 2;
   protected readonly name = "GLASS_BRIDGE";
   private players: string[] = [];
   private gameStarted: boolean = false;
@@ -102,8 +102,6 @@ class GlassBridgeGame extends Game {
 
       this.players.push(i.user.id);
 
-      console.log(i.user.username);
-
       embed.setFooter({
         text: `${this.players.length} user${
           this.players.length > 1 ? "s" : ""
@@ -149,10 +147,7 @@ class GlassBridgeGame extends Game {
 
     const validUser =
       i.user.id === this.message.author.id ||
-      permissions.users.includes(i.user.id) ||
-      member?.roles.cache.has(permissions.roles.admin) ||
-      member?.roles.cache.has(permissions.roles.eventStaff) ||
-      member?.roles.cache.has(permissions.roles.moderator);
+      permissions.users.includes(i.user.id);
 
     if (!validUser) return;
 
@@ -260,9 +255,6 @@ class GlassBridgeGame extends Game {
       await wait(3);
 
       const user = `<@${this.players[index]}>`;
-      console.log(this.players);
-      console.log("Index - ", index);
-      console.log("Size - ", this.players.length);
 
       try {
         if (!this.isActive()) return;
@@ -291,7 +283,6 @@ class GlassBridgeGame extends Game {
         collector.on("collect", async (reaction) => {
           const randomNumber = Math.random();
           const hardGlassBridge = randomNumber > 0.5 ? "LEFT" : "RIGHT";
-          console.log(randomNumber);
 
           if (
             (hardGlassBridge === "LEFT" &&

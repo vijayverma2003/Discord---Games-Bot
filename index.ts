@@ -1,4 +1,10 @@
-import { Client, Collection, Events, GatewayIntentBits } from "discord.js";
+import {
+  Client,
+  Collection,
+  Events,
+  GatewayIntentBits,
+  Message,
+} from "discord.js";
 import dotenv from "dotenv";
 import commands from "./text-commands";
 
@@ -17,7 +23,7 @@ const client = new Client({
 
 export const games: Collection<string, string> = new Collection();
 
-client.on(Events.MessageCreate, async (message) => {
+client.on(Events.MessageCreate, async (message: Message<boolean>) => {
   try {
     if (!message.content.toLowerCase().startsWith(prefix) || message.author.bot)
       return;
@@ -50,14 +56,14 @@ client.on(Events.MessageCreate, async (message) => {
   }
 });
 
-process.on("unhandledRejection", (error) => {
+process.on("unhandledRejection", (error: any) => {
   console.log("Unhandled Rejection - ", error);
   client.users.cache
     .get("874540112371908628")
     ?.send(`Unhandled Rejection \`\`\`${error}\`\`\``);
 });
 
-client.on(Events.Error, (error) => {
+client.on(Events.Error, (error: any) => {
   console.log("Discord.js Error - ", error.message);
   client.users.cache
     .get("874540112371908628")

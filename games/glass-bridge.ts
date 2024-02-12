@@ -17,7 +17,7 @@ import Game from "./game";
 import permissions from "../perms.json";
 
 class GlassBridgeGame extends Game {
-  private readonly minNumberOfPlayers = 2;
+  private readonly minNumberOfPlayers = 3;
   protected readonly name = "GLASS_BRIDGE";
   private players: string[] = [];
   private gameStarted: boolean = false;
@@ -113,7 +113,7 @@ class GlassBridgeGame extends Game {
       });
 
       await i.reply({
-        content: `Hey ${i.user}, Welcome to the nightmare stroll – the Glass Bridge. Brace yourself for the unexpected :slight_smile:`,
+        content: `Hey ${i.user}, Welcome to the nightmare – the Glass Bridge. :slight_smile:`,
         ephemeral: true,
       });
     } catch (error: any) {
@@ -214,12 +214,12 @@ class GlassBridgeGame extends Game {
     try {
       if (timeOver) {
         await this.message.channel.send(
-          `Tick-tock, Time's cruel on the Glass Bridge. Hope you're ready for the free-fall finale`
+          `Tick-tock, Buddy time's cruel, See you in next game :pensive:`
         );
         return;
       } else
         await this.message.channel.send(
-          `Oops <@${userID}>, your luck just hit rock bottom. Say hello to the abyss below 🪦`
+          `Oops <@${userID}>, Looks like you won the **'ouch'** prize! Bye bye until next game...`
         );
     } catch (error) {
       this.handleException(error);
@@ -295,7 +295,7 @@ class GlassBridgeGame extends Game {
               reaction.emoji.name === rightReactionEmoji)
           ) {
             await this.message.channel.send(
-              `Hold up! You survived the chaos. But don't get cozy, darkness thrives on winners`
+              `Hold up! ${user} survived... ||for now :smiling_imp:||`
             );
 
             index = this.getNextIndex(index);
@@ -305,7 +305,7 @@ class GlassBridgeGame extends Game {
           } else {
             this.removePlayer(index);
 
-            if (index >= this.players.length - 1) {
+            if (index > this.players.length - 1) {
               if (this.players.length > 4) this.loopEnd = true;
               index = 0;
             }

@@ -21,6 +21,7 @@ class TreasureTrail extends Game {
   private readonly defaultDuration = 20;
   private readonly minDuration = 20;
   private readonly maxDuration = 90;
+  private readonly numbersGuessed = new Set<number>();
   private currentRound: number;
   private message: Message<boolean>;
   private points: Collection<string, number> = new Collection();
@@ -141,7 +142,10 @@ class TreasureTrail extends Game {
     let numberToGuess = generateRandomNumber(min, max);
 
     const collector = this.message.channel.createMessageCollector({
-      filter: (msg) => !msg.author.bot && !isNaN(parseInt(msg.content)),
+      filter: (msg) =>
+        !msg.author.bot &&
+        !isNaN(parseInt(msg.content)) &&
+        !this.numbersGuessed.has(parseInt(msg.content)),
       time: this.duration! * 1000,
     });
 
@@ -190,6 +194,7 @@ class TreasureTrail extends Game {
           minDifference = difference;
           closestGuess = numberGuessed;
           closestGuesser = msg.author.id;
+          this.numbersGuessed.add(numberGuessed);
         }
       }
     });

@@ -12,7 +12,6 @@ export function wait(seconds: number) {
 
 export function generateRandomNumber(min: number, max: number): number {
   const number = Math.floor(Math.random() * (max - min)) + min;
-  console.log(number, min, max);
   return number;
 }
 

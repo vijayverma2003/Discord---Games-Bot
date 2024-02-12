@@ -14,7 +14,7 @@ import {
 import { games } from "..";
 import { shuffle, wait } from "../utils/helper";
 import Game from "./game";
-import permissions from "../data/permissions.json";
+import permissions from "../perms.json";
 
 class GlassBridgeGame extends Game {
   private readonly minNumberOfPlayers = 2;
@@ -147,7 +147,11 @@ class GlassBridgeGame extends Game {
 
     const validUser =
       i.user.id === this.message.author.id ||
-      permissions.users.includes(i.user.id);
+      permissions.users.includes(i.user.id) ||
+      member?.roles.cache.some(
+        (role) =>
+          role.name === "V Games Mod" || permissions.roles.includes(role.id)
+      );
 
     if (!validUser) return;
 

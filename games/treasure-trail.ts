@@ -266,6 +266,8 @@ class TreasureTrail extends Game {
         }
       }
 
+      this.numbersGuessed.clear();
+
       if (this.currentRound < this.numberOfRounds!) {
         this.startGame();
       } else this.endRound();

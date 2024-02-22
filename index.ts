@@ -10,7 +10,7 @@ import commands from "./text-commands";
 
 dotenv.config();
 
-const prefix = "v.";
+const prefix = "vd.";
 
 const client = new Client({
   intents: [

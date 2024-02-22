@@ -67,6 +67,30 @@ class GlassBridgeGame extends Game {
     return games.get(this.message.channelId) === this.name;
   }
 
+  async beginGame() {
+    const infoEmbed = new EmbedBuilder()
+      .setAuthor({
+        name: this.message.client.user.displayName,
+        iconURL: this.message.client.user.displayAvatarURL(),
+      })
+      .setDescription(this.getWelcomeMessage())
+      .setFooter({ text: "No one has joined the game yet" });
+
+    const msg = await this.message.channel.send({
+      embeds: [infoEmbed],
+      components: [this.createGameButtons()],
+    });
+
+    const collector = msg.createMessageComponentCollector({
+      componentType: ComponentType.Button,
+    });
+
+    collector.on("collect", async (i) => {
+      if (i.customId === "join") this.joinGame(i, infoEmbed, msg);
+      if (i.customId === "start") this.startGame(i);
+    });
+  }
+
   async joinGame(
     i: ButtonInteraction<CacheType>,
     embed: EmbedBuilder,
@@ -135,6 +159,15 @@ class GlassBridgeGame extends Game {
       return;
     }
 
+    if (this.gameStarted) {
+      await i.reply({
+        content: "The game has already started! :slight_smile:",
+        ephemeral: true,
+      });
+
+      return;
+    }
+
     if (this.players.length < this.minNumberOfPlayers) {
       i.reply({
         content: `There should be at-least ${this.minNumberOfPlayers} players to start the game`,
@@ -174,30 +207,6 @@ class GlassBridgeGame extends Game {
     return `\n\n**Welcome to Glass Bridge Game!**\n\n**How it works?**\n\nClick the **Join** button to join the game\n\nAfter the game starts, every user will be asked to choose either left or right bridge. If your guess is correct then you will move on to new step but if you did not then welcome to the abyss...\n\n**Duration for each player - ** ${this.duration} seconds\n\nThe last person remaining will win the game 🙂\n\n`;
   }
 
-  async beginGame() {
-    const infoEmbed = new EmbedBuilder()
-      .setAuthor({
-        name: this.message.client.user.displayName,
-        iconURL: this.message.client.user.displayAvatarURL(),
-      })
-      .setDescription(this.getWelcomeMessage())
-      .setFooter({ text: "No one has joined the game yet" });
-
-    const msg = await this.message.channel.send({
-      embeds: [infoEmbed],
-      components: [this.createGameButtons()],
-    });
-
-    const collector = msg.createMessageComponentCollector({
-      componentType: ComponentType.Button,
-    });
-
-    collector.on("collect", async (i) => {
-      if (i.customId === "join") this.joinGame(i, infoEmbed, msg);
-      if (i.customId === "start") this.startGame(i);
-    });
-  }
-
   getNextIndex(currentIndex: number) {
     if (currentIndex >= this.players.length - 1) {
       if (this.players.length > 4) this.loopEnd = true;
@@ -219,7 +228,7 @@ class GlassBridgeGame extends Game {
         return;
       } else
         await this.message.channel.send(
-          `Oops <@${userID}>, Looks like you won the **'ouch'** prize! Bye bye until next game...`
+          `Oops <@${userID}>, Looks like you won the **ouch** prize! Bye bye until next game...`
         );
     } catch (error) {
       this.handleException(error);
@@ -251,21 +260,23 @@ class GlassBridgeGame extends Game {
     const rightReactionEmoji = "➡️";
 
     const gameRound = async () => {
+      if (index >= this.players.length - 1) this.endRound();
+
       if (this.loopEnd) {
         this.sendRemainingPlayers();
         this.loopEnd = false;
       }
 
-      await wait(3);
+      await wait(5);
 
       const user = `<@${this.players[index]}>`;
 
       try {
         if (!this.isActive()) return;
 
-        const msg = await this.message.channel.send(
-          `${user}, Choose a bridge to step on!`
-        );
+        const msg = await this.message.channel.send({
+          content: `${user}, Choose a bridge to step on!`,
+        });
 
         if (!msg) return;
 
@@ -295,7 +306,7 @@ class GlassBridgeGame extends Game {
               reaction.emoji.name === rightReactionEmoji)
           ) {
             await this.message.channel.send(
-              `Hold up! ${user} survived... ||for now :smiling_imp:||`
+              `Hold up! ${user} survived... *for now* :smiling_imp:`
             );
 
             index = this.getNextIndex(index);
@@ -305,7 +316,7 @@ class GlassBridgeGame extends Game {
           } else {
             this.removePlayer(index);
 
-            if (index > this.players.length - 1) {
+            if (index >= this.players.length - 1) {
               if (this.players.length > 4) this.loopEnd = true;
               index = 0;
             }
@@ -323,10 +334,9 @@ class GlassBridgeGame extends Game {
 
           this.removePlayer(index, true);
 
-          if (this.players.length === 0) {
-            await this.message.channel.send(`The abyss claims it's silence...`);
-          } else {
-            index = this.getNextIndex(index);
+          if (this.players.length < 1) this.endRound();
+          else {
+            index = index >= this.players.length - 1 ? 0 : index;
             gameRound();
           }
         });
@@ -339,6 +349,9 @@ class GlassBridgeGame extends Game {
   }
 
   async endRound() {
+    //  If there are no players then the game ends without any winner
+    //  (Should happen when the last person remaining runs out of time)
+
     if (this.players.length < 1)
       await this.message.channel.send(`The abyss claims it's silence...`);
     else
@@ -353,6 +366,8 @@ class GlassBridgeGame extends Game {
       }
 
     games.delete(this.message.channelId);
+
+    return;
   }
 }
 

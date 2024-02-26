@@ -6,9 +6,12 @@ import {
   Message,
 } from "discord.js";
 import * as dotenv from "dotenv";
+import path from "path";
 import commands from "./text-commands";
 
 dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, ".env.development") });
+dotenv.config({ path: path.resolve(__dirname, ".env.production") });
 
 export const prefix = process.env.NODE_ENV === "production" ? "v." : "vd.";
 

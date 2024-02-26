@@ -224,22 +224,14 @@ class GlassBridgeGame extends Game {
 
     try {
       if (timeOver) {
-        await this.message.channel.send({
-          embeds: [
-            new EmbedBuilder().setDescription(
-              `Tick-tock, Buddy time's cruel, See you in next game :pensive:`
-            ),
-          ],
-        });
+        await this.message.channel.send(
+          `Tick-tock, Time's cruel, See you in next game <:squidgameguard1:1211601181076361266>`
+        );
         return;
       } else
-        await this.message.channel.send({
-          embeds: [
-            new EmbedBuilder().setDescription(
-              `Oops <@${userID}>, Looks like you won the **ouch** prize! Bye bye until next game...`
-            ),
-          ],
-        });
+        await this.message.channel.send(
+          `Oops <@${userID}>, Looks like you won the **ouch** prize! Bye bye until next game... <:squidgameguard2:1211601177427320904>`
+        );
     } catch (error) {
       this.handleException(error);
     }
@@ -270,7 +262,8 @@ class GlassBridgeGame extends Game {
     const rightReactionEmoji = "➡️";
 
     const gameRound = async () => {
-      if (index >= this.players.length - 1) this.endRound();
+      // console.log("Length - ", this.players.length, " At - ", index);
+      if (this.players.length === 1) this.endRound();
 
       if (this.loopEnd) {
         this.sendRemainingPlayers();
@@ -284,13 +277,9 @@ class GlassBridgeGame extends Game {
       try {
         if (!this.isActive()) return;
 
-        const msg = await this.message.channel.send({
-          embeds: [
-            new EmbedBuilder().setDescription(
-              `${user}, Choose a bridge to step on!`
-            ),
-          ],
-        });
+        const msg = await this.message.channel.send(
+          `<:squidgameplayer:1211601186508116068> ${user}, Choose a bridge to step on!`
+        );
 
         if (!msg) return;
 
@@ -319,13 +308,9 @@ class GlassBridgeGame extends Game {
             (hardGlassBridge === "RIGHT" &&
               reaction.emoji.name === rightReactionEmoji)
           ) {
-            await this.message.channel.send({
-              embeds: [
-                new EmbedBuilder().setDescription(
-                  `Hold up! ${user} survived... *for now* :smiling_imp:`
-                ),
-              ],
-            });
+            await this.message.channel.send(
+              `Hold up! ${user} survived... *for now* :smiling_imp:`
+            );
 
             index = this.getNextIndex(index);
 
@@ -334,7 +319,9 @@ class GlassBridgeGame extends Game {
           } else {
             this.removePlayer(index);
 
-            if (index >= this.players.length - 1) {
+            // 0 1 2
+
+            if (index >= this.players.length) {
               if (this.players.length > 4) this.loopEnd = true;
               index = 0;
             }
@@ -354,7 +341,7 @@ class GlassBridgeGame extends Game {
 
           if (this.players.length < 1) this.endRound();
           else {
-            index = index >= this.players.length - 1 ? 0 : index + 1;
+            index = index >= this.players.length ? 0 : index;
             gameRound();
           }
         });
@@ -371,22 +358,14 @@ class GlassBridgeGame extends Game {
     //  (Should happen when the last person remaining runs out of time)
 
     if (this.players.length < 1)
-      await this.message.channel.send({
-        embeds: [
-          new EmbedBuilder().setDescription(`The abyss claims it's silence...`),
-        ],
-      });
+      await this.message.channel.send(`The abyss claims it's silence...`);
     else
       try {
         if (!this.isActive()) return;
 
-        await this.message.channel.send({
-          embeds: [
-            new EmbedBuilder().setDescription(
-              `🏆🏆 <@${this.players[0]}> won the game! 🏆🏆`
-            ),
-          ],
-        });
+        await this.message.channel.send(
+          `🏆🏆 <@${this.players[0]}> won the game! 🏆🏆`
+        );
       } catch (error) {
         this.handleException(error);
       }

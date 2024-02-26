@@ -354,7 +354,7 @@ class GlassBridgeGame extends Game {
 
           if (this.players.length < 1) this.endRound();
           else {
-            index = index >= this.players.length - 1 ? 0 : index;
+            index = index >= this.players.length - 1 ? 0 : index + 1;
             gameRound();
           }
         });

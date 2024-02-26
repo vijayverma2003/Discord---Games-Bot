@@ -1,4 +1,5 @@
 import { EmbedBuilder, Message } from "discord.js";
+import { prefix } from "..";
 
 export default async function execute(message: Message<boolean>) {
   try {
@@ -10,7 +11,7 @@ export default async function execute(message: Message<boolean>) {
             iconURL: message.client.user.displayAvatarURL(),
           })
           .setDescription(
-            `** ** \n **Basic Commands-** \n ** ** \n- Use \`v.start [game]\` to start a game \n- Use \`v.end\` to end a game \n** **\n**Treasure Trail** -\n** **\n \`v.start treasure-trail [Number of Rounds] [Duration]\` \n ** ** \n**Glass Bridge** -\n** **\n \`v.start glass-bridge [Duration]\` \n`
+            `** ** \n **Basic Commands-** \n ** ** \n- Use \`${prefix}start [game]\` to start a game \n- Use \`${prefix}end\` to end a game \n** **\n**Treasure Trail** -\n** **\n \`${prefix}start treasure-trail [Number of Rounds] [Duration]\` \n ** ** \n**Glass Bridge** -\n** **\n \`${prefix}start glass-bridge [Duration]\` \n`
           ),
       ],
     });

@@ -10,7 +10,7 @@ import commands from "./text-commands";
 
 dotenv.config();
 
-const prefix = "v.";
+export const prefix = process.env.NODE_ENV === "production" ? "v." : "vd.";
 
 const client = new Client({
   intents: [

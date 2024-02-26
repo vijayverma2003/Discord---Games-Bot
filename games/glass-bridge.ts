@@ -12,9 +12,9 @@ import {
   User,
 } from "discord.js";
 import { games } from "..";
+import permissions from "../perms.json";
 import { shuffle, wait } from "../utils/helper";
 import Game from "./game";
-import permissions from "../perms.json";
 
 class GlassBridgeGame extends Game {
   private readonly minNumberOfPlayers = 3;
@@ -49,13 +49,15 @@ class GlassBridgeGame extends Game {
   createGameButtons() {
     const start = new ButtonBuilder()
       .setCustomId("start")
-      .setLabel("Start 💥 ")
-      .setStyle(ButtonStyle.Primary);
+      .setLabel("Start")
+      .setStyle(ButtonStyle.Primary)
+      .setEmoji("1211601181076361266");
 
     const join = new ButtonBuilder()
       .setCustomId("join")
-      .setLabel("Join 👧🏻")
-      .setStyle(ButtonStyle.Primary);
+      .setLabel("Join")
+      .setStyle(ButtonStyle.Primary)
+      .setEmoji("1211601186508116068");
 
     return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
       start,
@@ -204,7 +206,7 @@ class GlassBridgeGame extends Game {
   }
 
   getWelcomeMessage() {
-    return `\n\n**Welcome to Glass Bridge Game!**\n\n**How it works?**\n\nClick the **Join** button to join the game\n\nAfter the game starts, every user will be asked to choose either left or right bridge. If your guess is correct then you will move on to new step but if you did not then welcome to the abyss...\n\n**Duration for each player - ** ${this.duration} seconds\n\nThe last person remaining will win the game 🙂\n\n`;
+    return `** **\n**Welcome to Glass Bridge Game! <:squidgameguard1:1211601181076361266>**\n\n**How it works?**\n\n- Click the **Join** button to join the game\n\n- After the game starts, every user will be asked to choose either left or right bridge. If your guess is correct then you will move on to new step but if you did not then welcome to the abyss...\n\n- **Duration for each player - ** ${this.duration} seconds\n\n- The last person remaining will win the game <:squidgameplayer:1211601186508116068>\n** **\n`;
   }
 
   getNextIndex(currentIndex: number) {
@@ -222,14 +224,22 @@ class GlassBridgeGame extends Game {
 
     try {
       if (timeOver) {
-        await this.message.channel.send(
-          `Tick-tock, Buddy time's cruel, See you in next game :pensive:`
-        );
+        await this.message.channel.send({
+          embeds: [
+            new EmbedBuilder().setDescription(
+              `Tick-tock, Buddy time's cruel, See you in next game :pensive:`
+            ),
+          ],
+        });
         return;
       } else
-        await this.message.channel.send(
-          `Oops <@${userID}>, Looks like you won the **ouch** prize! Bye bye until next game...`
-        );
+        await this.message.channel.send({
+          embeds: [
+            new EmbedBuilder().setDescription(
+              `Oops <@${userID}>, Looks like you won the **ouch** prize! Bye bye until next game...`
+            ),
+          ],
+        });
     } catch (error) {
       this.handleException(error);
     }
@@ -275,7 +285,11 @@ class GlassBridgeGame extends Game {
         if (!this.isActive()) return;
 
         const msg = await this.message.channel.send({
-          content: `${user}, Choose a bridge to step on!`,
+          embeds: [
+            new EmbedBuilder().setDescription(
+              `${user}, Choose a bridge to step on!`
+            ),
+          ],
         });
 
         if (!msg) return;
@@ -305,9 +319,13 @@ class GlassBridgeGame extends Game {
             (hardGlassBridge === "RIGHT" &&
               reaction.emoji.name === rightReactionEmoji)
           ) {
-            await this.message.channel.send(
-              `Hold up! ${user} survived... *for now* :smiling_imp:`
-            );
+            await this.message.channel.send({
+              embeds: [
+                new EmbedBuilder().setDescription(
+                  `Hold up! ${user} survived... *for now* :smiling_imp:`
+                ),
+              ],
+            });
 
             index = this.getNextIndex(index);
 
@@ -353,14 +371,22 @@ class GlassBridgeGame extends Game {
     //  (Should happen when the last person remaining runs out of time)
 
     if (this.players.length < 1)
-      await this.message.channel.send(`The abyss claims it's silence...`);
+      await this.message.channel.send({
+        embeds: [
+          new EmbedBuilder().setDescription(`The abyss claims it's silence...`),
+        ],
+      });
     else
       try {
         if (!this.isActive()) return;
 
-        await this.message.channel.send(
-          `🏆🏆 <@${this.players[0]}> won the game! 🏆🏆`
-        );
+        await this.message.channel.send({
+          embeds: [
+            new EmbedBuilder().setDescription(
+              `🏆🏆 <@${this.players[0]}> won the game! 🏆🏆`
+            ),
+          ],
+        });
       } catch (error) {
         this.handleException(error);
       }

@@ -10,8 +10,10 @@ import path from "path";
 import commands from "./text-commands";
 
 dotenv.config();
-dotenv.config({ path: path.resolve(__dirname, ".env.development") });
-dotenv.config({ path: path.resolve(__dirname, ".env.production") });
+
+if (process.env.NODE_ENV === "development")
+  dotenv.config({ path: path.resolve(__dirname, ".env.development") });
+else dotenv.config({ path: path.resolve(__dirname, ".env.production") });
 
 export const prefix = process.env.NODE_ENV === "production" ? "v." : "vd.";
 

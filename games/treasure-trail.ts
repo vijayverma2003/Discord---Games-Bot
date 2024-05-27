@@ -156,7 +156,7 @@ class TreasureTrail extends Game {
         await this.message.channel.send({
           embeds: [
             new EmbedBuilder().setDescription(
-              `<:treasure:1194161940650536981> **A mysterious treasure chest has appeared!**\n\n<:gem:1201740854285582336> Number of Gems: ${min} - ${max}\n\n<:rolemodel:1182650754897547335> Closest guess wins!`
+              `<:treasure:1194161940650536981> **A mysterious treasure chest has appeared!**\n\n<:gem:1201740854285582336> Number of Gems: ${min} - ${max}\n\n<:kai1_whoa:1162566971838181437> Closest guess wins!`
             ),
           ],
         });

@@ -61,11 +61,34 @@ client.on(Events.MessageCreate, async (message: Message<boolean>) => {
   }
 });
 
-process.on("unhandledRejection", (error: any) => {
-  console.log("Unhandled Rejection - ", error);
-  client.users.cache
-    .get("874540112371908628")
-    ?.send(`Unhandled Rejection \`\`\`${error}\`\`\``);
+process.on("unhandledRejection", async (error: any) => {
+  try {
+    await client.users.cache
+      .get("874540112371908628")
+      ?.send(`Unhandled Rejection \`\`\`${error}\`\`\``);
+  } catch (error) {
+    console.log("Unhandled Rejection - ", error);
+  }
+});
+
+process.on("uncaughtException", async (error) => {
+  try {
+    await client.users.cache
+      .get("874540112371908628")
+      ?.send(`Unhandled Rejection \`\`\`${error}\`\`\``);
+  } catch (error) {
+    console.log("Uncaught Exception - ", error);
+  }
+});
+
+process.on("uncaughtExceptionMonitor", async (error, origin) => {
+  try {
+    await client.users.cache
+      .get("874540112371908628")
+      ?.send(`Unhandled Rejection \`\`\`${error}\`\`\`\`\`\`${origin}\`\`\``);
+  } catch (error) {
+    console.log("Uncaught Exception Monitor - ", error, origin);
+  }
 });
 
 client.on(Events.Error, (error: any) => {
